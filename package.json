@@ -1,0 +1,24 @@
+{
+  "name": "holiday-map",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "vitest run",
+    "import:links": "node --experimental-strip-types scripts/import-links.ts"
+  },
+  "dependencies": {
+    "astro": "^6.1.4",
+    "cheerio": "^1.2.0",
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.17",
+    "@types/node": "^25.5.2",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}
