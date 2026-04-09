@@ -5,6 +5,11 @@
       "source": "astrolicious/agent-skills",
       "sourceType": "github",
       "computedHash": "ebefe26b231d32379c14e41a46c2de7b4b0184543bedab7febdabe4fb21fba4e"
+    },
+    "netlify-functions": {
+      "source": "netlify/context-and-tools",
+      "sourceType": "github",
+      "computedHash": "4285baefe3164ee2711ca175465c3d27ae4c31df6ed0cc46b28e2e8d75e668a8"
     }
   }
 }
