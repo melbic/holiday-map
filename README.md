@@ -38,6 +38,7 @@ The site no longer bundles location data into the page.
 
 - Use the `Upload CSV` control in the sidebar to load a file into the app.
 - Use `Add link` to scrape a supported URL online and merge the result into the local browser CSV.
+- Use `Download CSV` to export the current browser-local CSV with a dated filename.
 - The selected CSV is stored only in your browser's `localStorage` and restored on reload.
 - Use `Clear local data` to remove the saved browser copy.
 - Uploaded/imported data stays in the browser until you replace or clear it.

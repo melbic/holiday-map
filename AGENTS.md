@@ -76,6 +76,7 @@ Rules:
   - left sidebar with the location list
   - right pane with the map
 - The sidebar includes upload controls for selecting a CSV file and clearing the saved browser copy.
+- The sidebar utility controls also include a `Download CSV` action that exports the current browser-local CSV.
 - The sidebar also includes an `Add link` flow that scrapes one supported URL online.
 - Incomplete online imports open a temporary review modal instead of occupying permanent sidebar space.
 - The sidebar header with `Holiday Map` and the pin count is sticky while the sidebar content scrolls.

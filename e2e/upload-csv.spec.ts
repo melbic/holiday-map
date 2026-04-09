@@ -17,6 +17,7 @@ test("uploads a CSV and renders map sidebar data", async ({ page }) => {
   await page.goto("/");
   await page.waitForURL("**/");
   await expect(page.locator(".leaflet-container")).toBeVisible();
+  await expect(page.locator("#download-csv")).toBeDisabled();
 
   await expect(page.getByText("Upload a CSV to keep your private holiday data local to this browser.")).toBeVisible();
   await expect(page.locator("#pin-count")).toHaveText("0 pins");
@@ -43,7 +44,13 @@ test("uploads a CSV and renders map sidebar data", async ({ page }) => {
   await expect(page.locator("#storage-status")).toContainText(
     "Loaded locations.csv and saved it in this browser.",
   );
+  await expect(page.locator("#download-csv")).toBeEnabled();
   await expect(page.locator(".leaflet-marker-icon")).toHaveCount(1);
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#download-csv").click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/^holiday-map-\d{4}-\d{2}-\d{2}\.csv$/);
 
   await page.locator("#mapped-list [data-location-index='0']").click();
   await expect(page.locator(".leaflet-popup-content .popup-photo")).toHaveAttribute(

@@ -44,6 +44,7 @@ const pinCountElement = document.getElementById("pin-count");
 const reviewCountElement = document.getElementById("review-count");
 const storageStatusElement = document.getElementById("storage-status");
 const uploadInputElement = document.getElementById("csv-upload");
+const downloadButtonElement = document.getElementById("download-csv");
 const clearButtonElement = document.getElementById("clear-csv");
 const listPanelElement = document.querySelector(".list-panel");
 const linkImportFormElement = document.getElementById("link-import-form");
@@ -157,6 +158,14 @@ const setStatusMessage = (message: string, isError = false) => {
   storageStatusElement.classList.toggle("is-error", isError);
 };
 
+const buildDownloadFilename = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `holiday-map-${year}-${month}-${day}.csv`;
+};
+
 if (
   mapElement instanceof HTMLElement &&
   mappedListElement instanceof HTMLUListElement &&
@@ -167,6 +176,7 @@ if (
   emptyStateElement instanceof HTMLElement &&
   pinCountElement instanceof HTMLElement &&
   reviewCountElement instanceof HTMLElement &&
+  downloadButtonElement instanceof HTMLButtonElement &&
   uploadInputElement instanceof HTMLInputElement &&
   clearButtonElement instanceof HTMLButtonElement &&
   linkImportFormElement instanceof HTMLFormElement &&
@@ -190,6 +200,10 @@ if (
   let activeLocationButtons: HTMLButtonElement[] = [];
   let pendingReviewDraft: EditableImportedLocationDraft | undefined;
   let reviewReturnFocusElement: HTMLElement | undefined;
+
+  const updateCsvUtilityState = () => {
+    downloadButtonElement.disabled = !window.localStorage.getItem(storageKey);
+  };
 
   const preventMapScrollFrom = (element: HTMLElement | null) => {
     if (!element) {
@@ -415,6 +429,7 @@ if (
     });
 
     window.localStorage.setItem(storageKey, merged.csvText);
+    updateCsvUtilityState();
     renderParsedCsv(merged.csvText, statusMessage);
     return merged;
   };
@@ -479,6 +494,7 @@ if (
     emptyStateElement.hidden = false;
     activeLocationButtons = [];
     renderMap([]);
+    updateCsvUtilityState();
   };
 
   const restoreStoredCsv = () => {
@@ -492,6 +508,7 @@ if (
 
     try {
       renderParsedCsv(storedCsv, "Loaded CSV from local storage.");
+      updateCsvUtilityState();
     } catch (error) {
       clearRenderedState();
       window.localStorage.removeItem(storageKey);
@@ -511,6 +528,7 @@ if (
       const csvText = await file.text();
       renderParsedCsv(csvText, `Loaded ${file.name} and saved it in this browser.`);
       window.localStorage.setItem(storageKey, csvText);
+      updateCsvUtilityState();
       uploadInputElement.value = "";
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not load the selected CSV.";
@@ -529,6 +547,29 @@ if (
     uploadInputElement.value = "";
     clearRenderedState();
     setStatusMessage("Cleared the saved CSV from this browser.");
+  });
+
+  downloadButtonElement.addEventListener("click", () => {
+    const csvText = window.localStorage.getItem(storageKey);
+
+    if (!csvText) {
+      updateCsvUtilityState();
+      setStatusMessage("Nothing to download yet.", true);
+      return;
+    }
+
+    const blob = new Blob([csvText], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = url;
+    anchor.download = buildDownloadFilename();
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+
+    setStatusMessage("Downloaded the current CSV.");
   });
 
   linkImportFormElement.addEventListener("submit", async (event) => {
@@ -602,4 +643,5 @@ if (
   });
 
   restoreStoredCsv();
+  updateCsvUtilityState();
 }
