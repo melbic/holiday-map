@@ -72,6 +72,8 @@
     --accent-strong: #0b5d57;
     --accent-soft: rgba(15, 118, 110, 0.12);
     --shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+    --list-card-radius: 22px;
+    --list-card-height: 96px;
   }
 
   * {
@@ -104,12 +106,15 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    height: 100vh;
     padding: 1.25rem;
     border-right: 1px solid var(--panel-border);
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(247, 250, 252, 0.84)),
       rgba(255, 255, 255, 0.72);
     backdrop-filter: blur(18px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .list-header {
@@ -118,6 +123,13 @@
     justify-content: space-between;
     gap: 1rem;
     padding-bottom: 0.25rem;
+    position: sticky;
+    top: -1.25rem;
+    z-index: 3;
+    margin: -1.25rem -1.25rem 0;
+    padding: 1.25rem 1.25rem 0.5rem;
+    background: linear-gradient(180deg, rgba(243, 246, 251, 0.98), rgba(243, 246, 251, 0.88) 72%, rgba(243, 246, 251, 0));
+    backdrop-filter: blur(10px);
   }
 
   .pin-count {
@@ -263,23 +275,25 @@
 
   .location-list {
     display: grid;
-    gap: 0.7rem;
+    gap: 0.55rem;
     list-style: none;
     margin: 0;
     padding: 0;
-    overflow: auto;
-    padding-right: 0.15rem;
+    overflow: visible;
   }
 
-  .location-button {
+  :global(.location-button) {
     width: 100%;
-    padding: 1rem 1rem 1.05rem;
+    height: var(--list-card-height);
+    min-height: var(--list-card-height);
+    padding: 0;
     text-align: left;
     border: 1px solid rgba(148, 163, 184, 0.18);
-    border-radius: 20px;
+    border-radius: var(--list-card-radius);
     background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
     cursor: pointer;
+    overflow: hidden;
     transition:
       transform 160ms ease,
       border-color 160ms ease,
@@ -287,18 +301,20 @@
       background 160ms ease;
   }
 
-  .review-card {
+  :global(.review-card) {
     display: grid;
-    gap: 0.65rem;
-    padding: 1rem 1rem 1.05rem;
+    height: var(--list-card-height);
+    min-height: var(--list-card-height);
+    grid-template-columns: 4.75rem minmax(0, 1fr);
     border: 1px dashed rgba(148, 163, 184, 0.32);
-    border-radius: 20px;
+    border-radius: var(--list-card-radius);
     background: rgba(255, 255, 255, 0.76);
+    overflow: hidden;
   }
 
-  .location-button:hover,
-  .location-button:focus-visible,
-  .location-button.is-active {
+  :global(.location-button:hover),
+  :global(.location-button:focus-visible),
+  :global(.location-button.is-active) {
     transform: translateY(-1px);
     border-color: rgba(15, 118, 110, 0.28);
     background: rgba(240, 253, 250, 0.96);
@@ -306,39 +322,104 @@
     outline: none;
   }
 
-  .location-row {
+  :global(.location-row) {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    margin-bottom: 0.45rem;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 
-  .location-title,
-  .location-type,
-  .location-description {
+  :global(.location-card-head) {
+    display: grid;
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+    gap: 0;
+    align-items: stretch;
+    min-height: 100%;
+  }
+
+  :global(.location-copy) {
+    display: grid;
+    align-content: start;
+    gap: 0.18rem;
+    min-width: 0;
+    min-height: 100%;
+    padding: 0.75rem 0.85rem 0.75rem 0.8rem;
+  }
+
+  :global(.location-thumb) {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    border-radius: 0;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(226, 232, 240, 0.98));
+    border-right: 1px solid rgba(148, 163, 184, 0.12);
+    flex-shrink: 0;
+  }
+
+  :global(.location-thumb.is-fallback) {
+    background: linear-gradient(180deg, rgba(240, 253, 250, 0.98), rgba(204, 251, 241, 0.98));
+    border-color: rgba(15, 118, 110, 0.14);
+  }
+
+  :global(.location-thumb-image) {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+
+  :global(.location-thumb-image[data-photo-error="true"]),
+  .map :global(.popup-photo[data-photo-error="true"]) {
+    display: none;
+  }
+
+  :global(.location-thumb-fallback) {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 1.55rem;
+    line-height: 1;
+    opacity: 0;
+  }
+
+  :global(.location-thumb.is-fallback .location-thumb-fallback),
+  :global(.location-thumb.has-photo .location-thumb-image[data-photo-error="true"] + .location-thumb-fallback) {
+    opacity: 1;
+  }
+
+  :global(.location-title),
+  :global(.location-meta),
+  .empty-state {
     display: block;
   }
 
-  .location-title {
+  :global(.location-title) {
     font-weight: 700;
     color: var(--text);
+    line-height: 1.28;
+    font-size: 0.96rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
-  .location-type {
-    flex-shrink: 0;
-    padding: 0.2rem 0.55rem;
-    border-radius: 999px;
-    background: rgba(226, 232, 240, 0.9);
-    color: #475569;
-    text-transform: capitalize;
-    font-size: 0.78rem;
-    font-weight: 700;
-  }
-
-  .location-description,
+  :global(.location-meta),
+  :global(.location-description),
   .empty-state {
     color: var(--muted);
+  }
+
+  :global(.location-meta) {
+    text-transform: capitalize;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .review-panel {
@@ -350,33 +431,184 @@
     overflow: visible;
   }
 
-  .review-badge {
+  :global(.review-card > .location-thumb) {
+    grid-row: 1 / -1;
+  }
+
+  :global(.review-card > .location-copy) {
+    padding-bottom: 0.3rem;
+  }
+
+  :global(.review-badge) {
     width: fit-content;
-    padding: 0.28rem 0.65rem;
+    padding: 0.22rem 0.5rem;
     border-radius: 999px;
     background: rgba(217, 119, 6, 0.12);
     color: #92400e;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
   }
 
-  .review-link {
+  :global(.review-card-footer) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0 0.85rem 0.7rem 0.8rem;
+  }
+
+  :global(.review-link) {
     width: fit-content;
     color: var(--accent-strong);
-    font-size: 0.9rem;
+    font-size: 0.76rem;
     font-weight: 700;
     text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .review-link:hover,
-  .review-link:focus-visible {
+  :global(.review-link:hover),
+  :global(.review-link:focus-visible) {
     text-decoration: underline;
     outline: none;
   }
 
-  .location-description {
+  :global(.location-description) {
     font-size: 0.94rem;
     line-height: 1.45;
+    margin: 0;
+  }
+
+  :global(.review-card .location-title) {
+    -webkit-line-clamp: 1;
+  }
+
+  :global(.review-card .location-meta) {
+    -webkit-line-clamp: 1;
+  }
+
+  .map :global(.leaflet-popup-content-wrapper) {
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+    overflow: hidden;
+  }
+
+  .map :global(.leaflet-popup-content) {
+    margin: 0;
+    min-width: min(280px, calc(100vw - 72px));
+    max-width: 320px;
+    overflow: hidden;
+    color: var(--text);
+  }
+
+  .map :global(.leaflet-popup-tip) {
+    background: rgba(255, 255, 255, 0.96);
+  }
+
+  .map :global(.leaflet-popup-close-button) {
+    top: 0;
+    right: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    border-radius: 0 22px 0 18px;
+    background: #ffffff;
+    color: #0f172a;
+    display: grid;
+    place-items: center;
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+
+  .map :global(.leaflet-popup-close-button:hover),
+  .map :global(.leaflet-popup-close-button:focus-visible) {
+    background: #f8fafc;
+    color: #020617;
+    outline: none;
+  }
+
+  .map :global(.popup-title),
+  .map :global(.popup-type),
+  .map :global(.popup-description),
+  .map :global(.popup-link) {
+    display: block;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .map :global(.popup-title) {
+    padding-top: 1rem;
+    font-size: 1.02rem;
+    line-height: 1.3;
+  }
+
+  .map :global(.popup-type) {
+    margin-top: 0.35rem;
+    color: var(--accent-strong);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: capitalize;
+  }
+
+  .map :global(.popup-description),
+  .map :global(.popup-link) {
+    margin: 0.7rem 0 0;
+    color: var(--muted);
+    line-height: 1.5;
+    font-size: 0.92rem;
+  }
+
+  .map :global(.popup-link:last-child),
+  .map :global(.popup-description:last-child) {
+    padding-bottom: 1rem;
+  }
+
+  .map :global(.leaflet-popup-content a) {
+    color: var(--accent-strong);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .map :global(.leaflet-popup-content a:hover),
+  .map :global(.leaflet-popup-content a:focus-visible) {
+    text-decoration: underline;
+    outline: none;
+  }
+
+  .map :global(.popup-media) {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(226, 232, 240, 0.8), rgba(203, 213, 225, 0.8));
+  }
+
+  .map :global(.popup-media.is-fallback) {
+    background: linear-gradient(180deg, rgba(240, 253, 250, 0.98), rgba(204, 251, 241, 0.98));
+  }
+
+  .map :global(.popup-photo) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .map :global(.popup-photo-fallback) {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-size: 2rem;
+    line-height: 1;
+    opacity: 0;
+  }
+
+  .map :global(.popup-media.is-fallback .popup-photo-fallback),
+  .map :global(.popup-photo[data-photo-error="true"] + .popup-photo-fallback) {
+    opacity: 1;
   }
 
   .map-panel {
@@ -477,6 +709,10 @@
   }
 
   @media (max-width: 900px) {
+    :root {
+      --list-card-height: 88px;
+    }
+
     .shell {
       grid-template-columns: 1fr;
     }
@@ -496,6 +732,11 @@
 
     .location-list {
       padding-bottom: 0.25rem;
+    }
+
+    .map :global(.leaflet-popup-content) {
+      min-width: min(260px, calc(100vw - 56px));
+      max-width: min(300px, calc(100vw - 56px));
     }
   }
 </style>

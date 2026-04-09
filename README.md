@@ -24,10 +24,11 @@ nvm use
 Prepare a CSV with this fixed header set. You can use [`src/data/locations.csv`](./src/data/locations.csv) as an example input file for imports or manual editing:
 
 ```csv
-title,type,description,latitude,longitude,link
+title,type,description,latitude,longitude,link,photo
 ```
 
 - `link` is optional and may be empty.
+- `photo` is optional and may be empty.
 - Rows missing `title` or `type` are skipped.
 - Rows without usable coordinates stay in the CSV and appear in a `Needs review` list in the sidebar.
 
@@ -40,9 +41,19 @@ The site no longer bundles location data into the page.
 - Use `Clear local data` to remove the saved browser copy.
 - The deployed site stays fully static and GitHub Pages compatible because parsing happens client-side.
 
+## UI behavior
+
+- The sidebar header stays sticky while the sidebar content scrolls.
+- Mapped locations and `Needs review` rows scroll together in one shared sidebar scroll area.
+- Sidebar rows use compact cards with a media preview.
+- The media preview shows `photo` when present and falls back to the location type emoji when the image is missing or fails.
+- Map popups show the `photo` at the top when available.
+
 ## Import links
 
 The project includes a local importer that scrapes pasted URLs, extracts metadata, and writes CSV rows.
+
+When a page exposes a main image in metadata, the importer stores it in the `photo` column so the map popup can show it.
 
 Interactive review mode:
 

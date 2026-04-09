@@ -5,6 +5,7 @@ export type LocationPin = {
   latitude: number;
   longitude: number;
   link?: string;
+  photo?: string;
 };
 
 export type PendingLocation = {
@@ -12,6 +13,7 @@ export type PendingLocation = {
   type: string;
   description: string;
   link?: string;
+  photo?: string;
   issue: "missing-coordinates" | "invalid-coordinates";
 };
 
@@ -28,6 +30,7 @@ const requiredHeaders = [
   "latitude",
   "longitude",
   "link",
+  "photo",
 ] as const;
 
 function splitCsvLine(line: string): string[] {
@@ -101,6 +104,7 @@ export function parseLocationsCsv(csvText: string): ParseLocationsResult {
     const type = row.type.trim();
     const description = row.description.trim();
     const link = row.link.trim() === "" ? undefined : row.link.trim();
+    const photo = row.photo.trim() === "" ? undefined : row.photo.trim();
     const latitudeRaw = row.latitude.trim();
     const longitudeRaw = row.longitude.trim();
     const latitude = Number(latitudeRaw);
@@ -117,6 +121,7 @@ export function parseLocationsCsv(csvText: string): ParseLocationsResult {
         type,
         description,
         link,
+        photo,
         issue: "missing-coordinates",
       });
       continue;
@@ -128,6 +133,7 @@ export function parseLocationsCsv(csvText: string): ParseLocationsResult {
         type,
         description,
         link,
+        photo,
         issue: "invalid-coordinates",
       });
       continue;
@@ -140,6 +146,7 @@ export function parseLocationsCsv(csvText: string): ParseLocationsResult {
       latitude,
       longitude,
       link,
+      photo,
     });
   }
 

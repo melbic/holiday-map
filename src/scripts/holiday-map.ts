@@ -38,6 +38,7 @@ const reviewCountElement = document.getElementById("review-count");
 const storageStatusElement = document.getElementById("storage-status");
 const uploadInputElement = document.getElementById("csv-upload");
 const clearButtonElement = document.getElementById("clear-csv");
+const listPanelElement = document.querySelector(".list-panel");
 
 const escapeHtml = (value: string) =>
   String(value)
@@ -61,6 +62,28 @@ const sanitizeExternalUrl = (value: string) => {
   } catch {
     return undefined;
   }
+};
+
+const photoLoadErrorAttribute = "data-photo-error";
+
+const truncateText = (value: string, maxLength: number) => {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  return `${value.slice(0, maxLength - 1).trimEnd()}...`;
+};
+
+const bindPhotoFallbacks = (container: ParentNode) => {
+  container.querySelectorAll<HTMLImageElement>("img[data-photo-role]").forEach((image) => {
+    image.addEventListener(
+      "error",
+      () => {
+        image.setAttribute(photoLoadErrorAttribute, "true");
+      },
+      { once: true },
+    );
+  });
 };
 
 const reviewIssueLabel = (issue: PendingLocation["issue"]) =>
@@ -92,6 +115,15 @@ if (
   let markers: L.Marker[] = [];
   let activeLocationButtons: HTMLButtonElement[] = [];
 
+  const preventMapScrollFrom = (element: HTMLElement | null) => {
+    if (!element) {
+      return;
+    }
+
+    L.DomEvent.disableScrollPropagation(element);
+    L.DomEvent.disableClickPropagation(element);
+  };
+
   const setActiveLocation = (activeIndex: number) => {
     activeLocationButtons.forEach((button) => {
       button.classList.toggle(
@@ -109,17 +141,28 @@ if (
   const renderMappedList = (locations: LocationPin[]) => {
     mappedListElement.innerHTML = locations
       .map(
-        (location, index) => `
+        (location, index) => {
+          const safePhoto = location.photo ? sanitizeExternalUrl(location.photo) : undefined;
+
+          return `
           <li>
             <button class="location-button" type="button" data-location-index="${index}">
-              <span class="location-row">
-                <span class="location-title">${escapeHtml(location.title)}</span>
-                <span class="location-type">${escapeHtml(location.type)}</span>
+              <span class="location-card-head">
+                <span class="location-thumb ${safePhoto ? "has-photo" : "is-fallback"}">
+                  ${safePhoto ? `<img class="location-thumb-image" src="${escapeHtml(safePhoto)}" alt="" loading="lazy" data-photo-role="list" />` : ""}
+                  <span class="location-thumb-fallback" aria-hidden="true">${emojiForType(location.type)}</span>
+                </span>
+                <span class="location-copy">
+                  <span class="location-row">
+                    <span class="location-title">${escapeHtml(location.title)}</span>
+                  </span>
+                  <span class="location-meta">${escapeHtml(location.type)}</span>
+                </span>
               </span>
-              ${location.description ? `<span class="location-description">${escapeHtml(location.description)}</span>` : ""}
             </button>
           </li>
-        `,
+        `;
+        },
       )
       .join("");
 
@@ -127,23 +170,33 @@ if (
     activeLocationButtons = Array.from(
       mappedListElement.querySelectorAll<HTMLButtonElement>("[data-location-index]"),
     );
+
+    bindPhotoFallbacks(mappedListElement);
   };
 
   const renderPendingList = (pendingLocations: PendingLocation[]) => {
     reviewListElement.innerHTML = pendingLocations
       .map((location) => {
         const safeLink = location.link ? sanitizeExternalUrl(location.link) : undefined;
+        const safePhoto = location.photo ? sanitizeExternalUrl(location.photo) : undefined;
 
         return `
           <li>
             <article class="review-card">
-              <span class="location-row">
-                <span class="location-title">${escapeHtml(location.title)}</span>
-                <span class="location-type">${escapeHtml(location.type)}</span>
+              <span class="location-thumb ${safePhoto ? "has-photo" : "is-fallback"}">
+                ${safePhoto ? `<img class="location-thumb-image" src="${escapeHtml(safePhoto)}" alt="" loading="lazy" data-photo-role="review" />` : ""}
+                <span class="location-thumb-fallback" aria-hidden="true">${emojiForType(location.type)}</span>
               </span>
-              <span class="review-badge">${escapeHtml(reviewIssueLabel(location.issue))}</span>
-              ${location.description ? `<span class="location-description">${escapeHtml(location.description)}</span>` : ""}
-              ${safeLink ? `<a class="review-link" href="${escapeHtml(safeLink)}" target="_blank" rel="noreferrer">Open source</a>` : ""}
+              <span class="location-copy">
+                <span class="location-row">
+                  <span class="location-title">${escapeHtml(location.title)}</span>
+                </span>
+                <span class="location-meta">${escapeHtml(location.type)}</span>
+              </span>
+              <span class="review-card-footer">
+                <span class="review-badge">${escapeHtml(reviewIssueLabel(location.issue))}</span>
+                ${safeLink ? `<a class="review-link" href="${escapeHtml(safeLink)}" target="_blank" rel="noreferrer">Open source</a>` : ""}
+              </span>
             </article>
           </li>
         `;
@@ -152,6 +205,7 @@ if (
 
     reviewPanelElement.hidden = pendingLocations.length === 0;
     reviewCountElement.textContent = String(pendingLocations.length);
+    bindPhotoFallbacks(reviewListElement);
   };
 
   const renderEmptyState = (locations: LocationPin[], pendingLocations: PendingLocation[]) => {
@@ -189,17 +243,27 @@ if (
       attribution: "&copy; OpenStreetMap contributors",
     }).addTo(map);
 
+    preventMapScrollFrom(listPanelElement instanceof HTMLElement ? listPanelElement : null);
+    preventMapScrollFrom(mappedListElement);
+    preventMapScrollFrom(reviewListElement);
+
     markers = locations.map((location, index) => {
       const safeLink = location.link ? sanitizeExternalUrl(location.link) : undefined;
+      const safePhoto = location.photo ? sanitizeExternalUrl(location.photo) : undefined;
       const popupParts = [
-        `<strong>${escapeHtml(location.title)}</strong>`,
-        `<div>${escapeHtml(location.type)}</div>`,
-        `<p>${escapeHtml(location.description)}</p>`,
+        `<div class="popup-media ${safePhoto ? "has-photo" : "is-fallback"}">${
+          safePhoto
+            ? `<img class="popup-photo" src="${escapeHtml(safePhoto)}" alt="${escapeHtml(location.title)}" loading="lazy" referrerpolicy="no-referrer" data-photo-role="popup" />`
+            : ""
+        }<span class="popup-photo-fallback" aria-hidden="true">${emojiForType(location.type)}</span></div>`,
+        `<strong class="popup-title">${escapeHtml(location.title)}</strong>`,
+        `<div class="popup-type">${escapeHtml(location.type)}</div>`,
+        location.description ? `<p class="popup-description">${escapeHtml(location.description)}</p>` : "",
       ];
 
       if (safeLink) {
         popupParts.push(
-          `<p><a href="${escapeHtml(safeLink)}" target="_blank" rel="noreferrer">Open link</a></p>`,
+          `<p class="popup-link"><a href="${escapeHtml(safeLink)}" target="_blank" rel="noreferrer">Open link</a></p>`,
         );
       }
 
@@ -227,6 +291,14 @@ if (
 
     const group = L.featureGroup(markers).addTo(map);
     map.fitBounds(group.getBounds(), { padding: [40, 40] });
+
+    map.on("popupopen", (event) => {
+      const popupElement = event.popup?.getElement();
+
+      if (popupElement) {
+        bindPhotoFallbacks(popupElement);
+      }
+    });
 
     activeLocationButtons.forEach((button) => {
       button.addEventListener("click", () => {

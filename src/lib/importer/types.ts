@@ -5,6 +5,7 @@ export type ImportedLocationDraft = {
   latitude?: number;
   longitude?: number;
   link: string;
+  photo: string;
   status: "complete" | "pending";
   notes: string[];
 };
@@ -16,6 +17,7 @@ export type CsvLocationRow = {
   latitude?: number;
   longitude?: number;
   link: string;
+  photo: string;
 };
 
 export type ScrapePageResult = {
@@ -27,6 +29,7 @@ export type ScrapePageResult = {
   type?: string;
   latitude?: number;
   longitude?: number;
+  photo?: string;
   addressCandidates: string[];
   notes: string[];
 };
@@ -67,6 +70,7 @@ export type StrategyResult = {
   type?: string;
   latitude?: number;
   longitude?: number;
+  photo?: string;
   addressCandidates?: string[];
   notes?: string[];
 };

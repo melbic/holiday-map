@@ -292,17 +292,20 @@ async function promptForChoice(prompt: string, options: string[]): Promise<strin
 async function promptToEditRow(row: EditableImportedLocationDraft): Promise<EditableImportedLocationDraft> {
   const readline = createInterface({ input: process.stdin, output: process.stdout });
   let current = { ...row };
-  const fields: Array<keyof Pick<EditableImportedLocationDraft, "title" | "type" | "description" | "latitude" | "longitude" | "link">> = [
+  const orderedFields: Array<
+    keyof Pick<EditableImportedLocationDraft, "title" | "type" | "description" | "latitude" | "longitude" | "link" | "photo">
+  > = [
     "title",
     "type",
     "description",
     "latitude",
     "longitude",
     "link",
+    "photo",
   ];
 
   while (true) {
-    for (const field of fields) {
+    for (const field of orderedFields) {
       const currentValue = current[field] ?? "";
       const answer = await readline.question(`${field} [${currentValue}]: `);
 

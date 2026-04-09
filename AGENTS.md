@@ -42,12 +42,13 @@ Location data uses the same CSV schema as `src/data/locations.csv`, but the main
 Use this exact header set:
 
 ```csv
-title,type,description,latitude,longitude,link
+title,type,description,latitude,longitude,link,photo
 ```
 
 Rules:
 
 - `link` may be empty.
+- `photo` may be empty.
 - `latitude` and `longitude` may be empty for rows that still need review.
 - Rows missing `title` or `type` are skipped with warnings.
 - Rows with missing or invalid coordinates stay in the CSV and appear in the sidebar review section until fixed.
@@ -68,10 +69,15 @@ Rules:
   - left sidebar with the location list
   - right pane with the map
 - The sidebar includes upload controls for selecting a CSV file and clearing the saved browser copy.
+- The sidebar header with `Holiday Map` and the pin count is sticky while the sidebar content scrolls.
 - The introductory page chrome was intentionally removed. Keep the interface focused on the list and map unless the user asks for more surrounding content.
 - Location list items act as the primary control surface and highlight the active selection.
+- The sidebar is a single shared scroll container: mapped items and `Needs review` scroll together.
+- Location list items show a compact media preview using the CSV `photo` when present and the type emoji as fallback.
+- List item text is intentionally compact: title plus a short type line.
 - Rows without usable coordinates appear in a separate `Needs review` section in the sidebar and do not focus the map.
 - Map pins are custom Leaflet `divIcon` markers that use emojis based on the CSV `type`.
+- Marker popups show the CSV `photo` image when present, above the text details.
 - The pin design is intentionally plain:
   - single-surface pin shape
   - no inner circle
@@ -99,4 +105,5 @@ If behavior changes affect the CSV schema or map interactions, update `README.md
 - Specialized strategy files currently exist for `inatur.no`, `finn.no`, `booking.com`, and Google Maps short/direct links.
 - To add support for another source, create a new top-level strategy file in `src/lib/importer/strategies/` that exports a default strategy.
 - The importer checks for embedded coordinates first and only falls back to Nominatim geocoding when needed.
+- The importer stores a scraped main photo URL when page metadata exposes `og:image`, `og:image:url`, or `twitter:image`.
 - Preserve pending rows when appending to an existing CSV.

@@ -10,6 +10,7 @@ export const csvHeaders = [
   "latitude",
   "longitude",
   "link",
+  "photo",
 ] as const;
 
 export function escapeCsvValue(value: string): string {
@@ -28,6 +29,7 @@ export function toCsvRow(row: CsvLocationRow): string {
     row.latitude?.toString() ?? "",
     row.longitude?.toString() ?? "",
     row.link,
+    row.photo,
   ]
     .map((value) => escapeCsvValue(value))
     .join(",");
@@ -65,19 +67,21 @@ export function mergeImportedRows(rows: ImportedLocationDraft[], options: CsvWri
   }
 
   const allRows = [
-    ...existingRows.map((row) => ({
-      ...row,
-      link: row.link ?? "",
-    })),
-    ...existingPendingRows.map((row) => ({
-      title: row.title,
-      type: row.type,
-      description: row.description,
-      latitude: undefined,
-      longitude: undefined,
-      link: row.link ?? "",
-    })),
-    ...written,
+      ...existingRows.map((row) => ({
+        ...row,
+        link: row.link ?? "",
+        photo: row.photo ?? "",
+      })),
+      ...existingPendingRows.map((row) => ({
+        title: row.title,
+        type: row.type,
+        description: row.description,
+        latitude: undefined,
+        longitude: undefined,
+        link: row.link ?? "",
+        photo: row.photo ?? "",
+      })),
+      ...written,
   ];
 
   return {
@@ -99,6 +103,10 @@ export function formatDryRun(rows: ImportedLocationDraft[]): string {
 
       if (row.description) {
         lines.push(`  description: ${row.description}`);
+      }
+
+      if (row.photo) {
+        lines.push(`  photo: ${row.photo}`);
       }
 
       for (const note of row.notes) {

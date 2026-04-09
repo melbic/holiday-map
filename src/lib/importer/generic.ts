@@ -99,6 +99,35 @@ function readMetaContent($: ReturnType<typeof load>, attribute: "name" | "proper
   return normalizeWhitespace($(`meta[${attribute}="${value}"]`).attr("content"));
 }
 
+function sanitizeImageUrl(value: string | undefined, baseUrl: string): string | undefined {
+  const normalized = normalizeWhitespace(value);
+
+  if (!normalized) {
+    return undefined;
+  }
+
+  try {
+    const resolved = new URL(normalized, baseUrl);
+
+    if (resolved.protocol !== "http:" && resolved.protocol !== "https:") {
+      return undefined;
+    }
+
+    return resolved.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+function extractPhotoUrl($: ReturnType<typeof load>, finalUrl: string): string | undefined {
+  return sanitizeImageUrl(
+    readMetaContent($, "property", "og:image") ||
+      readMetaContent($, "property", "og:image:url") ||
+      readMetaContent($, "name", "twitter:image"),
+    finalUrl,
+  );
+}
+
 export function extractJsonScriptById(html: string, scriptId: string): Record<string, unknown> | undefined {
   const $ = load(html);
   const raw = $(`script#${scriptId}`).html();
@@ -360,6 +389,7 @@ export function scrapePageFromHtml(input: { url: string; finalUrl?: string; html
     readMetaContent($, "property", "og:description") ||
     normalizeWhitespace($("p").first().text());
   const coordinates = extractCoordinatesFromHtml(input.html);
+  const photo = extractPhotoUrl($, finalUrl);
   const addressCandidates = extractAddressCandidates(input.html);
   const notes: string[] = [];
 
@@ -388,6 +418,7 @@ export function scrapePageFromHtml(input: { url: string; finalUrl?: string; html
     type: inferType({ schemaTypes, title, description, url: finalUrl }),
     latitude: coordinates?.latitude,
     longitude: coordinates?.longitude,
+    photo,
     addressCandidates,
     notes,
   };

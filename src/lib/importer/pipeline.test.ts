@@ -36,6 +36,7 @@ describe("importer pipeline", () => {
     expect(row.status).toBe("complete");
     expect(row.latitude).toBe(69.015);
     expect(row.type).toBe("accommodation");
+    expect(row.photo).toBe("");
   });
 
   it("skips geocoding when direct coordinates are available", async () => {
@@ -65,6 +66,34 @@ describe("importer pipeline", () => {
     expect(geocodeAddress).not.toHaveBeenCalled();
     expect(row.latitude).toBe(68.7);
     expect(row.longitude).toBe(17.4);
+    expect(row.photo).toBe("");
+  });
+
+  it("extracts photo metadata from og:image and preserves it", async () => {
+    const geocodeAddress = vi.fn();
+    const fetchJson = vi.fn();
+
+    const row = await importUrl("https://example.com/cabin", {
+      fetchPage: async () => ({
+        finalUrl: "https://example.com/cabin",
+        statusCode: 200,
+        html: `
+          <html>
+            <head>
+              <title>Cabin</title>
+              <meta property="og:image" content="/images/cabin.jpg" />
+              <script type="application/ld+json">
+                {"@type":"LodgingBusiness","name":"Cabin","geo":{"latitude":68.7,"longitude":17.4}}
+              </script>
+            </head>
+          </html>
+        `,
+      }),
+      fetchJson,
+      geocodeAddress,
+    });
+
+    expect(row.photo).toBe("https://example.com/images/cabin.jpg");
   });
 
   it("merges imported rows while deduping by link", () => {
@@ -77,6 +106,7 @@ describe("importer pipeline", () => {
           latitude: 1,
           longitude: 2,
           link: "https://example.com/new",
+          photo: "https://example.com/new.jpg",
           status: "complete",
           notes: [],
         },
@@ -87,6 +117,7 @@ describe("importer pipeline", () => {
           latitude: 3,
           longitude: 4,
           link: "https://example.com/already-there",
+          photo: "https://example.com/duplicate.jpg",
           status: "complete",
           notes: [],
         },
@@ -95,8 +126,8 @@ describe("importer pipeline", () => {
         append: true,
         dedupe: true,
         existingCsvText: [
-          "title,type,description,latitude,longitude,link",
-          "Existing,accommodation,Already present,10,11,https://example.com/already-there",
+          "title,type,description,latitude,longitude,link,photo",
+          "Existing,accommodation,Already present,10,11,https://example.com/already-there,https://example.com/existing.jpg",
         ].join("\n"),
       },
     );
@@ -109,6 +140,7 @@ describe("importer pipeline", () => {
       },
     ]);
     expect(merged.csvText).toContain("https://example.com/new");
+    expect(merged.csvText).toContain("https://example.com/new.jpg");
   });
 
   it("preserves pending rows when appending to an existing CSV", () => {
@@ -121,6 +153,7 @@ describe("importer pipeline", () => {
           latitude: 1,
           longitude: 2,
           link: "https://example.com/imported",
+          photo: "https://example.com/imported.jpg",
           status: "complete",
           notes: [],
         },
@@ -129,14 +162,15 @@ describe("importer pipeline", () => {
         append: true,
         dedupe: true,
         existingCsvText: [
-          "title,type,description,latitude,longitude,link",
-          "Pending,accommodation,Needs coordinates,,,https://example.com/pending",
+          "title,type,description,latitude,longitude,link,photo",
+          "Pending,accommodation,Needs coordinates,,,https://example.com/pending,https://example.com/pending.jpg",
         ].join("\n"),
       },
     );
 
-    expect(merged.csvText).toContain("Pending,accommodation,Needs coordinates,,,https://example.com/pending");
+    expect(merged.csvText).toContain("Pending,accommodation,Needs coordinates,,,https://example.com/pending,https://example.com/pending.jpg");
     expect(merged.csvText).toContain("https://example.com/imported");
+    expect(merged.csvText).toContain("https://example.com/imported.jpg");
   });
 
   it("escapes CSV values with commas and quotes", () => {

@@ -5,8 +5,8 @@ import { parseLocationsCsv } from "./locations";
 describe("parseLocationsCsv", () => {
   it("parses valid rows", () => {
     const csv = [
-      "title,type,description,latitude,longitude,link",
-      "Airport,airport,Main arrival point,47.45,8.56,https://example.com",
+      "title,type,description,latitude,longitude,link,photo",
+      "Airport,airport,Main arrival point,47.45,8.56,https://example.com,https://example.com/photo.jpg",
     ].join("\n");
 
     const result = parseLocationsCsv(csv);
@@ -21,24 +21,26 @@ describe("parseLocationsCsv", () => {
       latitude: 47.45,
       longitude: 8.56,
       link: "https://example.com",
+      photo: "https://example.com/photo.jpg",
     });
   });
 
-  it("allows a missing link", () => {
+  it("allows missing link and photo", () => {
     const csv = [
-      "title,type,description,latitude,longitude,link",
-      "Stay,accommodation,Apartment,46.2,6.1,",
+      "title,type,description,latitude,longitude,link,photo",
+      "Stay,accommodation,Apartment,46.2,6.1,,",
     ].join("\n");
 
     const result = parseLocationsCsv(csv);
 
     expect(result.locations[0]?.link).toBeUndefined();
+    expect(result.locations[0]?.photo).toBeUndefined();
   });
 
   it("moves rows with invalid coordinates into needs review", () => {
     const csv = [
-      "title,type,description,latitude,longitude,link",
-      "Stay,accommodation,Apartment,nope,6.1,https://example.com",
+      "title,type,description,latitude,longitude,link,photo",
+      "Stay,accommodation,Apartment,nope,6.1,https://example.com,https://example.com/photo.jpg",
     ].join("\n");
 
     const result = parseLocationsCsv(csv);
@@ -50,6 +52,7 @@ describe("parseLocationsCsv", () => {
         type: "accommodation",
         description: "Apartment",
         link: "https://example.com",
+        photo: "https://example.com/photo.jpg",
         issue: "invalid-coordinates",
       },
     ]);
@@ -58,8 +61,8 @@ describe("parseLocationsCsv", () => {
 
   it("moves rows with missing coordinates into needs review", () => {
     const csv = [
-      "title,type,description,latitude,longitude,link",
-      "Stay,accommodation,Apartment,,,https://example.com",
+      "title,type,description,latitude,longitude,link,photo",
+      "Stay,accommodation,Apartment,,,https://example.com,https://example.com/photo.jpg",
     ].join("\n");
 
     const result = parseLocationsCsv(csv);
@@ -71,6 +74,7 @@ describe("parseLocationsCsv", () => {
         type: "accommodation",
         description: "Apartment",
         link: "https://example.com",
+        photo: "https://example.com/photo.jpg",
         issue: "missing-coordinates",
       },
     ]);
@@ -78,8 +82,8 @@ describe("parseLocationsCsv", () => {
 
   it("still skips rows missing a title or type", () => {
     const csv = [
-      "title,type,description,latitude,longitude,link",
-      ",accommodation,Apartment,46.2,6.1,https://example.com",
+      "title,type,description,latitude,longitude,link,photo",
+      ",accommodation,Apartment,46.2,6.1,https://example.com,https://example.com/photo.jpg",
     ].join("\n");
 
     const result = parseLocationsCsv(csv);
@@ -93,12 +97,12 @@ describe("parseLocationsCsv", () => {
 
   it("throws when required headers are missing", () => {
     const csv = [
-      "title,type,description,latitude,link",
-      "Stay,accommodation,Apartment,46.2,https://example.com",
+      "title,type,description,latitude,longitude,link",
+      "Stay,accommodation,Apartment,46.2,6.1,https://example.com",
     ].join("\n");
 
     expect(() => parseLocationsCsv(csv)).toThrow(
-      "CSV is missing required headers: longitude",
+      "CSV is missing required headers: photo",
     );
   });
 });

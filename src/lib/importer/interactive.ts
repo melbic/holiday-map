@@ -12,6 +12,7 @@ export function formatInteractiveSummary(row: ImportedLocationDraft): string {
     `latitude: ${row.latitude ?? "(empty)"}`,
     `longitude: ${row.longitude ?? "(empty)"}`,
     `link: ${row.link || "(empty)"}`,
+    `photo: ${row.photo || "(empty)"}`,
     `status: ${row.status === "complete" ? "complete" : "needs review"}`,
   ];
 
@@ -56,13 +57,14 @@ export function finalizeEditedRow(row: EditableImportedLocationDraft): EditableI
     type: row.type.trim(),
     description: row.description.trim(),
     link: row.link.trim(),
+    photo: row.photo.trim(),
     status: complete ? "complete" : "pending",
   };
 }
 
 export function applyFieldEdit(
   row: EditableImportedLocationDraft,
-  field: keyof Pick<EditableImportedLocationDraft, "title" | "type" | "description" | "latitude" | "longitude" | "link">,
+  field: keyof Pick<EditableImportedLocationDraft, "title" | "type" | "description" | "latitude" | "longitude" | "link" | "photo">,
   value: string,
 ): EditableImportedLocationDraft {
   if (field === "latitude" || field === "longitude") {
@@ -88,6 +90,7 @@ export function createManualRow(seedUrl = ""): EditableImportedLocationDraft {
     latitude: undefined,
     longitude: undefined,
     link: seedUrl,
+    photo: "",
     status: "pending",
     notes: ["Created manually during interactive import."],
   };

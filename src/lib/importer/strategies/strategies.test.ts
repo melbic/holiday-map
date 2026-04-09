@@ -18,6 +18,7 @@ describe("importer strategies", () => {
           <html>
             <head>
               <title>Gjestehytte i Dividal med laksefiske</title>
+              <meta property="og:image" content="https://images.example.com/inatur.jpg" />
               <script>
                 json = JSON.parse(JSON.stringify({"id":"62472aa2869f5c06c9506875","hyttedetaljer":{"address":{"adresselinje1":"Dividalsveien 1903","postnummer":"9334","poststed":"Overbygd"}}}));
               </script>
@@ -37,6 +38,7 @@ describe("importer strategies", () => {
     expect(geocodeAddress).not.toHaveBeenCalled();
     expect(row.latitude).toBeCloseTo(68.8648, 3);
     expect(row.longitude).toBeCloseTo(19.5536, 3);
+    expect(row.photo).toBe("https://images.example.com/inatur.jpg");
     expect(row.notes).toContain("Coordinates loaded from Inatur map service.");
   });
 
@@ -52,6 +54,7 @@ describe("importer strategies", () => {
           <html>
             <head>
               <title>Moderne hytte i Lodingen Vestbygd</title>
+              <meta property="og:image" content="https://images.example.com/finn.jpg" />
               <script id="__NEXT_DATA__" type="application/json">
                 {"props":{"pageProps":{"swrFallback":{"objectDataKey":{"location":{"latitude":68.3714904237352,"longitude":15.7220628955536}}}}}}
               </script>
@@ -67,6 +70,7 @@ describe("importer strategies", () => {
     expect(geocodeAddress).not.toHaveBeenCalled();
     expect(row.latitude).toBeCloseTo(68.37149, 5);
     expect(row.longitude).toBeCloseTo(15.72206, 5);
+    expect(row.photo).toBe("https://images.example.com/finn.jpg");
     expect(row.notes).toContain("Coordinates loaded from FINN page data.");
   });
 
@@ -86,6 +90,7 @@ describe("importer strategies", () => {
               <head>
                 <meta property="og:title" content="Attme Have, Brostadbotn, Norway" />
                 <meta property="og:description" content="Boasting a garden, Attme Have is situated in Brostadbotn." />
+                <meta property="og:image" content="https://images.example.com/booking.jpg" />
               </head>
               <body>
                 <a data-atlas-latlng="69.0691869671005,17.652965983992" href="#map_opened-map_trigger_header"></a>
@@ -106,6 +111,7 @@ describe("importer strategies", () => {
     expect(row.latitude).toBeCloseTo(69.06918, 4);
     expect(row.longitude).toBeCloseTo(17.65296, 4);
     expect(row.title).toBe("Attme Have, Brostadbotn, Norway");
+    expect(row.photo).toBe("https://images.example.com/booking.jpg");
     expect(row.notes).toContain("Coordinates loaded from Booking page data.");
   });
 
@@ -143,7 +149,7 @@ describe("importer strategies", () => {
         finalUrl:
           "https://www.google.com/maps/place/Troms%C3%B8+Airport/@69.6840974,18.9124202,18.08z/data=!4m6!3m5!1s0x45c4c422788e3f0f:0x5040733cf2f3e30e!8m2!3d69.6834173!4d18.9168388!16zL20vMDlkcDNj?entry=tts",
         statusCode: 200,
-        html: "<html><head><title>Google Maps</title></head><body></body></html>",
+        html: "<html><head><title>Google Maps</title><meta property=\"og:image\" content=\"https://images.example.com/maps.jpg\" /></head><body></body></html>",
       }),
       fetchJson,
       geocodeAddress,
@@ -155,6 +161,7 @@ describe("importer strategies", () => {
     expect(row.type).toBe("airport");
     expect(row.latitude).toBeCloseTo(69.6834173, 6);
     expect(row.longitude).toBeCloseTo(18.9168388, 6);
+    expect(row.photo).toBe("https://images.example.com/maps.jpg");
     expect(row.notes).toContain("Coordinates loaded from Google Maps URL.");
   });
 });

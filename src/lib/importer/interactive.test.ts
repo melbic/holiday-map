@@ -15,6 +15,7 @@ describe("importer interactive helpers", () => {
       type: "sight",
       description: "",
       link: "https://example.com",
+      photo: "",
       status: "pending",
     });
   });
@@ -71,11 +72,13 @@ describe("importer interactive helpers", () => {
       latitude: 69.6,
       longitude: 18.9,
       link: "https://example.com",
+      photo: "https://example.com/photo.jpg",
       status: "complete",
       notes: ["Coordinates loaded from Google Maps URL."],
     });
 
     expect(summary).toContain("title: Tromso Airport");
+    expect(summary).toContain("photo: https://example.com/photo.jpg");
     expect(summary).toContain("status: complete");
     expect(summary).toContain("- Coordinates loaded from Google Maps URL.");
   });

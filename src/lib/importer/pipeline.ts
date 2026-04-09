@@ -9,6 +9,7 @@ function mergeStrategyResult(scraped: ReturnType<typeof scrapePageFromHtml>, str
     type: strategyResult?.type ?? scraped.type,
     latitude: strategyResult?.latitude ?? scraped.latitude,
     longitude: strategyResult?.longitude ?? scraped.longitude,
+    photo: strategyResult?.photo ?? scraped.photo,
     addressCandidates: uniqueStrings([...(strategyResult?.addressCandidates ?? []), ...scraped.addressCandidates]),
     notes: [...scraped.notes, ...(strategyResult?.notes ?? [])],
   };
@@ -106,6 +107,7 @@ export async function importUrl(
     latitude: geocoded.latitude,
     longitude: geocoded.longitude,
     link: normalizeUrl(scraped.finalUrl || normalizedUrl),
+    photo: merged.photo ?? "",
     status: geocoded.latitude !== undefined && geocoded.longitude !== undefined ? "complete" : "pending",
     notes: geocoded.notes,
   };
