@@ -303,12 +303,6 @@ if (
     destroyMap();
     mapElement.innerHTML = "";
 
-    if (locations.length === 0) {
-      mapElement.innerHTML =
-        "<p class='map-empty'>Upload a CSV with valid coordinates to display the map.</p>";
-      return;
-    }
-
     map = L.map(mapElement, {
       zoomControl: true,
       scrollWheelZoom: true,
@@ -322,6 +316,11 @@ if (
     preventMapScrollFrom(listPanelElement instanceof HTMLElement ? listPanelElement : null);
     preventMapScrollFrom(mappedListElement);
     preventMapScrollFrom(reviewListElement);
+
+    if (locations.length === 0) {
+      map.setView([54, 15], 5);
+      return;
+    }
 
     markers = locations.map((location, index) => {
       const safeLink = location.link ? sanitizeExternalUrl(location.link) : undefined;
@@ -469,8 +468,6 @@ if (
 
   const clearRenderedState = () => {
     destroyMap();
-    mapElement.innerHTML =
-      "<p class='map-empty'>Upload a CSV with valid coordinates to display the map.</p>";
     mappedListElement.innerHTML = "";
     mappedListElement.hidden = true;
     reviewListElement.innerHTML = "";
@@ -481,6 +478,7 @@ if (
     pinCountElement.textContent = "0 pins";
     emptyStateElement.hidden = false;
     activeLocationButtons = [];
+    renderMap([]);
   };
 
   const restoreStoredCsv = () => {

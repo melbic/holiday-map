@@ -16,9 +16,7 @@ test("uploads a CSV and renders map sidebar data", async ({ page }) => {
 
   await page.goto("/");
   await page.waitForURL("**/");
-  await expect(page.locator("#map")).toContainText(
-    "Upload a CSV with valid coordinates to display the map.",
-  );
+  await expect(page.locator(".leaflet-container")).toBeVisible();
 
   await expect(page.getByText("Upload a CSV to keep your private holiday data local to this browser.")).toBeVisible();
   await expect(page.locator("#pin-count")).toHaveText("0 pins");
