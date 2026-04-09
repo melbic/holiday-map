@@ -1,4 +1,5 @@
 export { createCsvText, csvHeaders, escapeCsvValue, formatDryRun, mergeImportedRows, toCsvRow } from "./csv.ts";
+export { createImportDependencies, delay, fetchJson, fetchPage, geocodeAddress } from "./dependencies.ts";
 export {
   applyFieldEdit,
   createManualRow,

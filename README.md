@@ -1,7 +1,7 @@
 # Holiday Map
 
 A simple static holiday planning map built with Astro, TypeScript, Leaflet, and OpenStreetMap.
-The app loads trip data from a CSV you upload in the browser and stores that CSV locally in `localStorage`.
+The app loads trip data from a CSV you upload in the browser, stores that CSV locally in `localStorage`, and can scrape supported listing links online when hosted on Netlify.
 
 ## Setup
 
@@ -37,9 +37,10 @@ title,type,description,latitude,longitude,link,photo
 The site no longer bundles location data into the page.
 
 - Use the `Upload CSV` control in the sidebar to load a file into the app.
+- Use `Add link` to scrape a supported URL online and merge the result into the local browser CSV.
 - The selected CSV is stored only in your browser's `localStorage` and restored on reload.
 - Use `Clear local data` to remove the saved browser copy.
-- The deployed site stays fully static and GitHub Pages compatible because parsing happens client-side.
+- Uploaded/imported data stays in the browser until you replace or clear it.
 
 ## UI behavior
 
@@ -52,6 +53,14 @@ The site no longer bundles location data into the page.
 ## Import links
 
 The project includes a local importer that scrapes pasted URLs, extracts metadata, and writes CSV rows.
+
+The Netlify-hosted app also exposes `/api/import-link` so the website can scrape one supported link at a time and merge it into the browser-local CSV.
+
+Website import behavior:
+
+- Complete imports auto-save immediately when `title`, `type`, valid coordinates, and `link` are present.
+- Incomplete imports open an in-app review form before saving.
+- Imported rows are merged into the current browser-local CSV state.
 
 When a page exposes a main image in metadata, the importer stores it in the `photo` column so the map popup can show it.
 
@@ -112,17 +121,13 @@ npm run import:links -- --dry-run --urls "https://maps.app.goo.gl/13XC3V4FeEbZSv
 npm run import:links -- --dry-run --urls "https://www.finn.no/reise/feriehus-hytteutleie/ad.html?finnkode=186297216"
 ```
 
-## GitHub Pages
+## Netlify deployment
 
-The Astro config defaults to:
+The app is intended to be deployed on Netlify.
 
-- `PUBLIC_BASE_PATH=/holiday-map`
-- `PUBLIC_SITE_URL=https://example.com`
-
-Override them for your deployment if needed:
+Useful environment variables:
 
 ```sh
-PUBLIC_SITE_URL="https://YOUR-USER.github.io" \
-PUBLIC_BASE_PATH="/holiday-map" \
+PUBLIC_SITE_URL="https://your-site.netlify.app" \
 npm run build
 ```

@@ -12,9 +12,11 @@
     "import:links": "node --experimental-strip-types scripts/import-links.ts"
   },
   "dependencies": {
+    "@astrojs/netlify": "^7.0.6",
     "astro": "^6.1.4",
     "cheerio": "^1.2.0",
-    "leaflet": "^1.9.4"
+    "leaflet": "^1.9.4",
+    "netlify": "^24.11.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

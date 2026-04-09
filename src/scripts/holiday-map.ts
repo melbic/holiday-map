@@ -1,6 +1,13 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+import {
+  createCsvText,
+  finalizeEditedRow,
+  mergeImportedRows,
+  type EditableImportedLocationDraft,
+  type ImportedLocationDraft,
+} from "../lib/link-importer.ts";
 import { parseLocationsCsv, type LocationPin, type PendingLocation } from "../lib/locations";
 
 const typeEmojiMap: Record<string, string> = {
@@ -39,6 +46,21 @@ const storageStatusElement = document.getElementById("storage-status");
 const uploadInputElement = document.getElementById("csv-upload");
 const clearButtonElement = document.getElementById("clear-csv");
 const listPanelElement = document.querySelector(".list-panel");
+const linkImportFormElement = document.getElementById("link-import-form");
+const linkImportUrlElement = document.getElementById("link-import-url");
+const linkImportSubmitElement = document.getElementById("link-import-submit");
+const linkImportStatusElement = document.getElementById("link-import-status");
+const linkReviewPanelElement = document.getElementById("link-review-panel");
+const linkReviewFormElement = document.getElementById("link-review-form");
+const linkReviewNotesElement = document.getElementById("link-review-notes");
+const linkReviewCancelElement = document.getElementById("link-review-cancel");
+const reviewTitleElement = document.getElementById("review-title");
+const reviewTypeElement = document.getElementById("review-type");
+const reviewDescriptionElement = document.getElementById("review-description");
+const reviewLatitudeElement = document.getElementById("review-latitude");
+const reviewLongitudeElement = document.getElementById("review-longitude");
+const reviewLinkElement = document.getElementById("review-link");
+const reviewPhotoElement = document.getElementById("review-photo");
 
 const escapeHtml = (value: string) =>
   String(value)
@@ -89,6 +111,42 @@ const bindPhotoFallbacks = (container: ParentNode) => {
 const reviewIssueLabel = (issue: PendingLocation["issue"]) =>
   issue === "invalid-coordinates" ? "Invalid coordinates" : "Missing coordinates";
 
+const hasCompleteImportData = (row: ImportedLocationDraft) =>
+  row.title.trim() !== "" &&
+  row.type.trim() !== "" &&
+  row.link.trim() !== "" &&
+  row.latitude !== undefined &&
+  row.longitude !== undefined &&
+  Number.isFinite(row.latitude) &&
+  Number.isFinite(row.longitude);
+
+const createEmptyCsv = () => createCsvText([]);
+
+const parseOptionalNumber = (value: string) => {
+  const trimmed = value.trim();
+
+  if (trimmed === "") {
+    return undefined;
+  }
+
+  const number = Number(trimmed);
+  return Number.isFinite(number) ? number : undefined;
+};
+
+const createReviewDraft = (row: ImportedLocationDraft): EditableImportedLocationDraft => ({
+  ...row,
+  notes: [...row.notes],
+});
+
+const setImportStatusMessage = (message: string, isError = false) => {
+  if (!(linkImportStatusElement instanceof HTMLElement)) {
+    return;
+  }
+
+  linkImportStatusElement.textContent = message;
+  linkImportStatusElement.classList.toggle("is-error", isError);
+};
+
 const setStatusMessage = (message: string, isError = false) => {
   if (!(storageStatusElement instanceof HTMLElement)) {
     return;
@@ -109,11 +167,26 @@ if (
   pinCountElement instanceof HTMLElement &&
   reviewCountElement instanceof HTMLElement &&
   uploadInputElement instanceof HTMLInputElement &&
-  clearButtonElement instanceof HTMLButtonElement
+  clearButtonElement instanceof HTMLButtonElement &&
+  linkImportFormElement instanceof HTMLFormElement &&
+  linkImportUrlElement instanceof HTMLInputElement &&
+  linkImportSubmitElement instanceof HTMLButtonElement &&
+  linkReviewPanelElement instanceof HTMLElement &&
+  linkReviewFormElement instanceof HTMLFormElement &&
+  linkReviewNotesElement instanceof HTMLElement &&
+  linkReviewCancelElement instanceof HTMLButtonElement &&
+  reviewTitleElement instanceof HTMLInputElement &&
+  reviewTypeElement instanceof HTMLInputElement &&
+  reviewDescriptionElement instanceof HTMLTextAreaElement &&
+  reviewLatitudeElement instanceof HTMLInputElement &&
+  reviewLongitudeElement instanceof HTMLInputElement &&
+  reviewLinkElement instanceof HTMLInputElement &&
+  reviewPhotoElement instanceof HTMLInputElement
 ) {
   let map: L.Map | undefined;
   let markers: L.Marker[] = [];
   let activeLocationButtons: HTMLButtonElement[] = [];
+  let pendingReviewDraft: EditableImportedLocationDraft | undefined;
 
   const preventMapScrollFrom = (element: HTMLElement | null) => {
     if (!element) {
@@ -331,6 +404,58 @@ if (
     setStatusMessage(statusMessage);
   };
 
+  const persistImportedRows = (rows: ImportedLocationDraft[], statusMessage: string) => {
+    const existingCsvText = window.localStorage.getItem(storageKey) ?? createEmptyCsv();
+    const merged = mergeImportedRows(rows, {
+      append: true,
+      dedupe: true,
+      existingCsvText,
+    });
+
+    window.localStorage.setItem(storageKey, merged.csvText);
+    renderParsedCsv(merged.csvText, statusMessage);
+    return merged;
+  };
+
+  const closeReviewPanel = () => {
+    pendingReviewDraft = undefined;
+    linkReviewPanelElement.hidden = true;
+    linkReviewNotesElement.textContent = "";
+    linkReviewFormElement.reset();
+  };
+
+  const openReviewPanel = (row: ImportedLocationDraft) => {
+    pendingReviewDraft = createReviewDraft(row);
+    reviewTitleElement.value = row.title;
+    reviewTypeElement.value = row.type;
+    reviewDescriptionElement.value = row.description;
+    reviewLatitudeElement.value = row.latitude?.toString() ?? "";
+    reviewLongitudeElement.value = row.longitude?.toString() ?? "";
+    reviewLinkElement.value = row.link;
+    reviewPhotoElement.value = row.photo;
+    linkReviewNotesElement.textContent =
+      row.notes.length > 0 ? row.notes.join(" ") : "Complete the missing fields before saving this row.";
+    linkReviewPanelElement.hidden = false;
+  };
+
+  const importLink = async (url: string) => {
+    const response = await fetch("/api/import-link", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ url }),
+    });
+
+    const payload = (await response.json()) as ImportedLocationDraft | { error?: string };
+
+    if (!response.ok) {
+      throw new Error(typeof payload === "object" && payload && "error" in payload ? payload.error || "Import failed." : "Import failed.");
+    }
+
+    return payload as ImportedLocationDraft;
+  };
+
   const clearRenderedState = () => {
     destroyMap();
     mapElement.innerHTML =
@@ -389,6 +514,68 @@ if (
     uploadInputElement.value = "";
     clearRenderedState();
     setStatusMessage("Cleared the saved CSV from this browser.");
+  });
+
+  linkImportFormElement.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const url = linkImportUrlElement.value.trim();
+
+    if (url === "") {
+      setImportStatusMessage("Paste a valid URL first.", true);
+      return;
+    }
+
+    linkImportSubmitElement.disabled = true;
+    setImportStatusMessage("Importing link...");
+
+    try {
+      const imported = await importLink(url);
+
+      if (hasCompleteImportData(imported)) {
+        persistImportedRows([imported], `Imported ${imported.title} from ${imported.link}.`);
+        closeReviewPanel();
+        linkImportFormElement.reset();
+        setImportStatusMessage(`Imported ${imported.title}.`);
+      } else {
+        openReviewPanel(imported);
+        setImportStatusMessage("Review the imported row before saving.");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not import that link.";
+      setImportStatusMessage(message, true);
+    } finally {
+      linkImportSubmitElement.disabled = false;
+    }
+  });
+
+  linkReviewCancelElement.addEventListener("click", () => {
+    closeReviewPanel();
+    setImportStatusMessage("Cancelled review.");
+  });
+
+  linkReviewFormElement.addEventListener("submit", (event) => {
+    event.preventDefault();
+
+    if (!pendingReviewDraft) {
+      return;
+    }
+
+    const finalized = finalizeEditedRow({
+      ...pendingReviewDraft,
+      title: reviewTitleElement.value,
+      type: reviewTypeElement.value,
+      description: reviewDescriptionElement.value,
+      latitude: parseOptionalNumber(reviewLatitudeElement.value),
+      longitude: parseOptionalNumber(reviewLongitudeElement.value),
+      link: reviewLinkElement.value,
+      photo: reviewPhotoElement.value,
+    });
+
+    persistImportedRows([finalized], `Saved ${finalized.title} to the local CSV.`);
+    closeReviewPanel();
+    linkImportFormElement.reset();
+    setImportStatusMessage(`Saved ${finalized.title}.`);
   });
 
   restoreStoredCsv();

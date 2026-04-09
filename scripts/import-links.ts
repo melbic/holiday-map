@@ -5,6 +5,7 @@ import process from "node:process";
 
 import {
   applyFieldEdit,
+  createImportDependencies,
   createManualRow,
   finalizeEditedRow,
   formatDryRun,
@@ -13,9 +14,7 @@ import {
   mergeImportedRows,
   normalizeUrl,
   validateEditedRow,
-  type FetchPageOptions,
   type EditableImportedLocationDraft,
-  type GeocodeResult,
   type ImportedLocationDraft,
 } from "../src/lib/link-importer.ts";
 
@@ -147,93 +146,7 @@ async function readUrlsFromFile(filePath: string): Promise<string[]> {
     .filter((line) => line !== "");
 }
 
-async function delay(ms: number): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function fetchPage(
-  url: string,
-  options?: FetchPageOptions,
-): Promise<{ finalUrl: string; statusCode?: number; html: string }> {
-  const response = await fetch(url, {
-    headers: {
-      "user-agent": options?.userAgent ?? "holiday-map-link-importer/0.1 (+https://example.com)",
-      accept: "text/html,application/xhtml+xml",
-      ...options?.headers,
-    },
-    redirect: "follow",
-  });
-
-  return {
-    finalUrl: response.url || url,
-    statusCode: response.status,
-    html: await response.text(),
-  };
-}
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const response = await fetch(url, {
-    headers: {
-      "user-agent": "holiday-map-link-importer/0.1 (+https://example.com)",
-      accept: "application/json",
-      referer: "https://www.inatur.no/",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Request failed with HTTP ${response.status}`);
-  }
-
-  return (await response.json()) as T;
-}
-
-const geocodeCache = new Map<string, GeocodeResult | undefined>();
-
-async function geocodeAddress(query: string): Promise<GeocodeResult | undefined> {
-  const normalizedQuery = query.trim();
-
-  if (normalizedQuery === "") {
-    return undefined;
-  }
-
-  if (geocodeCache.has(normalizedQuery)) {
-    return geocodeCache.get(normalizedQuery);
-  }
-
-  const url = new URL("https://nominatim.openstreetmap.org/search");
-  url.searchParams.set("q", normalizedQuery);
-  url.searchParams.set("format", "jsonv2");
-  url.searchParams.set("limit", "1");
-
-  const response = await fetch(url, {
-    headers: {
-      "user-agent": "holiday-map-link-importer/0.1 (+https://example.com)",
-      accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    geocodeCache.set(normalizedQuery, undefined);
-    return undefined;
-  }
-
-  const result = (await response.json()) as Array<{ lat?: string; lon?: string; display_name?: string }>;
-  const first = result[0];
-
-  if (!first?.lat || !first?.lon) {
-    geocodeCache.set(normalizedQuery, undefined);
-    return undefined;
-  }
-
-  const geocode = {
-    latitude: Number(first.lat),
-    longitude: Number(first.lon),
-    label: first.display_name,
-  };
-
-  geocodeCache.set(normalizedQuery, geocode);
-  return geocode;
-}
+const importDependencies = createImportDependencies();
 
 function printResults(rows: ImportedLocationDraft[], outputPath: string, dryRun: boolean): void {
   console.log(formatDryRun(rows));
@@ -406,7 +319,7 @@ async function runInteractiveImport(
     console.log(`\nReviewing ${index + 1}/${urls.length}: ${url}`);
 
     try {
-      const imported = await importUrl(url, { fetchPage, fetchJson, geocodeAddress, delay });
+      const imported = await importUrl(url, importDependencies);
       const reviewed = await reviewInteractiveRow(imported);
 
       if (reviewed) {
@@ -429,7 +342,7 @@ async function runInteractiveImport(
     }
 
     if (index < urls.length - 1) {
-      await delay(1100);
+      await importDependencies.delay?.(1100);
     }
   }
 
@@ -531,11 +444,11 @@ async function main(): Promise<void> {
   for (let index = 0; index < urls.length; index += 1) {
     const url = urls[index];
     console.log(`Importing ${index + 1}/${urls.length}: ${url}`);
-    const row = await importUrl(url, { fetchPage, fetchJson, geocodeAddress, delay });
+    const row = await importUrl(url, importDependencies);
     importedRows.push(row);
 
     if (index < urls.length - 1) {
-      await delay(1100);
+      await importDependencies.delay?.(1100);
     }
   }
 

@@ -14,8 +14,8 @@ test("uploads a CSV and renders map sidebar data", async ({ page }) => {
     }
   });
 
-  await page.goto("/holiday-map/");
-  await page.waitForURL("**/holiday-map/");
+  await page.goto("/");
+  await page.waitForURL("**/");
   await expect(page.locator("#map")).toContainText(
     "Upload a CSV with valid coordinates to display the map.",
   );

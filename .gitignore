@@ -92,3 +92,6 @@ out/
 .yarn/unplugged
 .yarn/install-state.gz
 .pnp.*
+
+# Local Netlify folder
+.netlify

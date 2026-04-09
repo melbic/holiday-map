@@ -13,7 +13,7 @@ Static holiday planning map built with:
 - Leaflet
 - OpenStreetMap tiles
 
-The site is fully static and intended to work well with GitHub Pages.
+The app is deployed on Netlify, with the UI plus server-backed link import available from the same project.
 
 ## Core Commands
 
@@ -56,12 +56,12 @@ Rules:
 
 ## Implementation Notes
 
-- Keep the app statically buildable. Do not introduce server-side runtime requirements.
+- Keep the app deployable on Netlify with Astro plus its API route runtime.
 - Keep the map based on Leaflet with OpenStreetMap tiles unless the user asks to switch providers.
-- Preserve GitHub Pages compatibility. The build uses Astro `base` handling from `astro.config.mjs`.
+- Prefer root-path deployment defaults unless the user explicitly asks for a different base path.
 - Keep the UI simple by default: map, markers, popups, and the companion location list.
 - Treat CSV content as untrusted input and escape any user-visible HTML.
-- The runtime data source for the UI is browser-uploaded CSV stored in `localStorage`, not a bundled import in the page component.
+- The runtime data source for the UI is browser-local CSV state stored in `localStorage`, not a bundled import in the page component.
 
 ## Current UI Behavior
 
@@ -69,6 +69,7 @@ Rules:
   - left sidebar with the location list
   - right pane with the map
 - The sidebar includes upload controls for selecting a CSV file and clearing the saved browser copy.
+- The sidebar also includes an `Add link` flow that scrapes one supported URL online.
 - The sidebar header with `Holiday Map` and the pin count is sticky while the sidebar content scrolls.
 - The introductory page chrome was intentionally removed. Keep the interface focused on the list and map unless the user asks for more surrounding content.
 - Location list items act as the primary control surface and highlight the active selection.
@@ -98,10 +99,10 @@ If behavior changes affect the CSV schema or map interactions, update `README.md
 ## Import Workflow
 
 - Use the local importer for bulk link ingestion rather than adding runtime scraping.
-- The importer is intentionally local and Node-based so the deployed app stays fully static and GitHub Pages compatible.
+- The website also supports one-at-a-time online link import via the Netlify-hosted `/api/import-link` route.
 - Always prefer a `--dry-run` pass before writing imported rows.
 - The importer also supports `--interactive` mode for paste-many terminal review, auto-adding complete rows, field editing for incomplete rows, manual coordinate entry, manual row creation on failed imports, and a final prompt to replace or append to the target CSV.
-- The importer uses a generic pipeline plus auto-discovered top-level strategies from `src/lib/importer/strategies/`.
+- The importer uses a generic pipeline plus an explicit top-level strategy list from `src/lib/importer/strategies/`.
 - Specialized strategy files currently exist for `inatur.no`, `finn.no`, `booking.com`, and Google Maps short/direct links.
 - To add support for another source, create a new top-level strategy file in `src/lib/importer/strategies/` that exports a default strategy.
 - The importer checks for embedded coordinates first and only falls back to Nominatim geocoding when needed.

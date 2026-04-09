@@ -30,6 +30,68 @@
           </p>
         </section>
 
+        <section class="import-panel" aria-label="Online link import">
+          <div class="section-header">
+            <h2>Add link</h2>
+          </div>
+          <form class="import-form" id="link-import-form">
+            <input
+              id="link-import-url"
+              class="text-input"
+              type="url"
+              name="url"
+              placeholder="https://example.com/place"
+              autocomplete="url"
+              required
+            />
+            <button class="primary-button" type="submit" id="link-import-submit">Import link</button>
+          </form>
+          <p class="helper-text" id="link-import-status">
+            Paste a supported link to scrape title, type, coordinates, and photo online.
+          </p>
+        </section>
+
+        <section class="review-editor" id="link-review-panel" aria-label="Review imported row" hidden>
+          <div class="section-header">
+            <h2>Review import</h2>
+          </div>
+          <p class="helper-text" id="link-review-notes"></p>
+          <form class="review-form" id="link-review-form">
+            <label class="field-group">
+              <span>Title</span>
+              <input class="text-input" id="review-title" name="title" type="text" required />
+            </label>
+            <label class="field-group">
+              <span>Type</span>
+              <input class="text-input" id="review-type" name="type" type="text" required />
+            </label>
+            <label class="field-group field-group-wide">
+              <span>Description</span>
+              <textarea class="text-area" id="review-description" name="description" rows="3"></textarea>
+            </label>
+            <label class="field-group">
+              <span>Latitude</span>
+              <input class="text-input" id="review-latitude" name="latitude" type="number" step="any" />
+            </label>
+            <label class="field-group">
+              <span>Longitude</span>
+              <input class="text-input" id="review-longitude" name="longitude" type="number" step="any" />
+            </label>
+            <label class="field-group field-group-wide">
+              <span>Link</span>
+              <input class="text-input" id="review-link" name="link" type="url" required />
+            </label>
+            <label class="field-group field-group-wide">
+              <span>Photo</span>
+              <input class="text-input" id="review-photo" name="photo" type="url" />
+            </label>
+            <div class="review-actions field-group-wide">
+              <button class="primary-button" type="submit">Save row</button>
+              <button class="secondary-button" type="button" id="link-review-cancel">Cancel</button>
+            </div>
+          </form>
+        </section>
+
         <div class="warning-box" id="warning-box" aria-live="polite" hidden>
           <strong>Skipped rows</strong>
           <ul id="warning-list"></ul>
@@ -182,7 +244,73 @@
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
   }
 
+  .import-panel,
+  .review-editor {
+    display: grid;
+    gap: 0.8rem;
+    padding: 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  }
+
   .upload-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .import-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem;
+  }
+
+  .review-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .field-group {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .field-group span {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .field-group-wide {
+    grid-column: 1 / -1;
+  }
+
+  .text-input,
+  .text-area {
+    width: 100%;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--text);
+    font: inherit;
+    padding: 0.72rem 0.85rem;
+  }
+
+  .text-input:focus,
+  .text-area:focus {
+    outline: 2px solid rgba(15, 118, 110, 0.18);
+    border-color: rgba(15, 118, 110, 0.36);
+  }
+
+  .text-area {
+    resize: vertical;
+    min-height: 5.75rem;
+  }
+
+  .review-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
@@ -728,6 +856,11 @@
     .map {
       min-height: 58vh;
       height: 58vh;
+    }
+
+    .import-form,
+    .review-form {
+      grid-template-columns: 1fr;
     }
 
     .location-list {

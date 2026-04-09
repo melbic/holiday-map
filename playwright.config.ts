@@ -9,7 +9,7 @@ export default defineConfig({
   },
   webServer: {
     command: "zsh -lc 'source ~/.nvm/nvm.sh && nvm use 25.6.1 && npm run dev -- --host 127.0.0.1 --port 4321'",
-    url: "http://127.0.0.1:4321/holiday-map",
+    url: "http://127.0.0.1:4321/",
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
   },
