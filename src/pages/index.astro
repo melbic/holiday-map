@@ -1,11 +1,3 @@
----
-import csvText from "../data/locations.csv?raw";
-import { parseLocationsCsv } from "../lib/locations";
-
-const { locations, pendingLocations, warnings } = parseLocationsCsv(csvText);
-const mapData = JSON.stringify(locations);
----
-
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -13,7 +5,7 @@ const mapData = JSON.stringify(locations);
     <title>Holiday Map</title>
     <meta
       name="description"
-      content="A simple static holiday planning map built from a CSV file."
+      content="A private holiday planning map loaded from a local CSV file in your browser."
     />
   </head>
   <body>
@@ -24,85 +16,42 @@ const mapData = JSON.stringify(locations);
             <p class="eyebrow">Holiday planner</p>
             <h1>Holiday Map</h1>
           </div>
-          <span class="pin-count">{locations.length} pins</span>
+          <span class="pin-count" id="pin-count">0 pins</span>
         </header>
 
-        {
-          warnings.length > 0 && (
-            <div class="warning-box" aria-live="polite">
-              <strong>Skipped rows</strong>
-              <ul>
-                {warnings.map((warning) => <li>{warning}</li>)}
-              </ul>
-            </div>
-          )
-        }
+        <section class="upload-panel" aria-label="Private data controls">
+          <div class="upload-actions">
+            <label class="primary-button" for="csv-upload">Upload CSV</label>
+            <input id="csv-upload" class="hidden-input" type="file" accept=".csv,text/csv" />
+            <button class="secondary-button" type="button" id="clear-csv">Clear local data</button>
+          </div>
+          <p class="helper-text" id="storage-status">
+            Your CSV stays in this browser and is restored from local storage on reload.
+          </p>
+        </section>
 
-        {
-          locations.length > 0 ? (
-            <ul class="location-list" aria-label="Mapped locations">
-              {locations.map((location, index) => (
-                <li>
-                  <button
-                    class="location-button"
-                    type="button"
-                    data-location-index={index}
-                  >
-                    <span class="location-row">
-                      <span class="location-title">{location.title}</span>
-                      <span class="location-type">{location.type}</span>
-                    </span>
-                    {location.description && (
-                      <span class="location-description">{location.description}</span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p class="empty-state">No mappable locations were found in the CSV file.</p>
-          )
-        }
+        <div class="warning-box" id="warning-box" aria-live="polite" hidden>
+          <strong>Skipped rows</strong>
+          <ul id="warning-list"></ul>
+        </div>
 
-        {
-          pendingLocations.length > 0 && (
-            <section class="review-panel" aria-label="Needs review">
-              <div class="section-header">
-                <h2>Needs review</h2>
-                <span class="review-count">{pendingLocations.length}</span>
-              </div>
-              <ul class="location-list review-list">
-                {pendingLocations.map((location) => (
-                  <li>
-                    <article class="review-card">
-                      <span class="location-row">
-                        <span class="location-title">{location.title}</span>
-                        <span class="location-type">{location.type}</span>
-                      </span>
-                      <span class="review-badge">
-                        {location.issue === "invalid-coordinates"
-                          ? "Invalid coordinates"
-                          : "Missing coordinates"}
-                      </span>
-                      {location.description && (
-                        <span class="location-description">{location.description}</span>
-                      )}
-                      {location.link && (
-                        <a class="review-link" href={location.link} target="_blank" rel="noreferrer">
-                          Open source
-                        </a>
-                      )}
-                    </article>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )
-        }
+        <p class="empty-state" id="list-empty-state">
+          Upload a CSV to keep your private holiday data local to this browser.
+        </p>
+
+        <ul class="location-list" id="mapped-list" aria-label="Mapped locations" hidden></ul>
+
+        <section class="review-panel" id="review-panel" aria-label="Needs review" hidden>
+          <div class="section-header">
+            <h2>Needs review</h2>
+            <span class="review-count" id="review-count">0</span>
+          </div>
+          <ul class="location-list review-list" id="review-list"></ul>
+        </section>
       </aside>
 
       <section class="map-panel">
-        <div id="map" class="map" aria-label="Holiday map" data-locations={mapData}></div>
+        <div id="map" class="map" aria-label="Holiday map"></div>
       </section>
     </main>
     <script>
@@ -209,6 +158,84 @@ const mapData = JSON.stringify(locations);
     border: 1px solid rgba(217, 119, 6, 0.18);
     color: #92400e;
     font-size: 0.92rem;
+  }
+
+  .upload-panel {
+    display: grid;
+    gap: 0.8rem;
+    padding: 1rem;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.84);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  }
+
+  .upload-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .primary-button,
+  .secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.7rem 1rem;
+    border-radius: 14px;
+    border: 1px solid rgba(15, 118, 110, 0.14);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+      transform 160ms ease,
+      border-color 160ms ease,
+      background 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .primary-button {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 10px 20px rgba(15, 118, 110, 0.18);
+  }
+
+  .secondary-button {
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--text);
+  }
+
+  .primary-button:hover,
+  .primary-button:focus-visible,
+  .secondary-button:hover,
+  .secondary-button:focus-visible {
+    transform: translateY(-1px);
+    border-color: rgba(15, 118, 110, 0.32);
+    outline: none;
+  }
+
+  .hidden-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .helper-text {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .helper-text.is-error {
+    color: #b91c1c;
   }
 
   .section-header {

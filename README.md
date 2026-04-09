@@ -1,13 +1,16 @@
 # Holiday Map
 
 A simple static holiday planning map built with Astro, TypeScript, Leaflet, and OpenStreetMap.
+The app loads trip data from a CSV you upload in the browser and stores that CSV locally in `localStorage`.
 
 ## Setup
 
 1. Install dependencies with `npm install`.
 2. Start development with `npm run dev`.
-3. Build the static site with `npm run build`.
-4. Import listing links with `npm run import:links -- --help`.
+3. Run unit tests with `npm test`.
+4. Run browser tests with `npm run test:e2e`.
+5. Build the static site with `npm run build`.
+6. Import listing links with `npm run import:links -- --help`.
 
 If your shell does not expose Node directly, load it first with:
 
@@ -18,7 +21,7 @@ nvm use
 
 ## CSV format
 
-Edit [`src/data/locations.csv`](./src/data/locations.csv) with this fixed header set:
+Prepare a CSV with this fixed header set. You can use [`src/data/locations.csv`](./src/data/locations.csv) as an example input file for imports or manual editing:
 
 ```csv
 title,type,description,latitude,longitude,link
@@ -27,6 +30,15 @@ title,type,description,latitude,longitude,link
 - `link` is optional and may be empty.
 - Rows missing `title` or `type` are skipped.
 - Rows without usable coordinates stay in the CSV and appear in a `Needs review` list in the sidebar.
+
+## App data loading
+
+The site no longer bundles location data into the page.
+
+- Use the `Upload CSV` control in the sidebar to load a file into the app.
+- The selected CSV is stored only in your browser's `localStorage` and restored on reload.
+- Use `Clear local data` to remove the saved browser copy.
+- The deployed site stays fully static and GitHub Pages compatible because parsing happens client-side.
 
 ## Import links
 

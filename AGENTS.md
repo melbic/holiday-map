@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Maintenance Rule
+
+- Always create or update `AGENTS.md` after finishing a task so the repo instructions stay in sync with the current implementation and workflow.
+
 ## Project
 
 Static holiday planning map built with:
@@ -25,6 +29,7 @@ Project commands:
 ```sh
 npm install
 npm test
+npm run test:e2e
 ASTRO_TELEMETRY_DISABLED=1 npm run build
 npm run dev
 npm run import:links -- --help
@@ -32,7 +37,7 @@ npm run import:links -- --help
 
 ## Data Contract
 
-Location data lives in `src/data/locations.csv`.
+Location data uses the same CSV schema as `src/data/locations.csv`, but the main app now loads CSV content from a browser upload and stores it in local storage.
 
 Use this exact header set:
 
@@ -55,12 +60,14 @@ Rules:
 - Preserve GitHub Pages compatibility. The build uses Astro `base` handling from `astro.config.mjs`.
 - Keep the UI simple by default: map, markers, popups, and the companion location list.
 - Treat CSV content as untrusted input and escape any user-visible HTML.
+- The runtime data source for the UI is browser-uploaded CSV stored in `localStorage`, not a bundled import in the page component.
 
 ## Current UI Behavior
 
 - The app currently uses a full-window split layout:
   - left sidebar with the location list
   - right pane with the map
+- The sidebar includes upload controls for selecting a CSV file and clearing the saved browser copy.
 - The introductory page chrome was intentionally removed. Keep the interface focused on the list and map unless the user asks for more surrounding content.
 - Location list items act as the primary control surface and highlight the active selection.
 - Rows without usable coordinates appear in a separate `Needs review` section in the sidebar and do not focus the map.
@@ -77,6 +84,7 @@ Rules:
 When changing parsing or rendering behavior:
 
 - run `npm test`
+- run `npm run test:e2e`
 - run `ASTRO_TELEMETRY_DISABLED=1 npm run build`
 
 If behavior changes affect the CSV schema or map interactions, update `README.md` too.
