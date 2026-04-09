@@ -19,17 +19,6 @@
           <span class="pin-count" id="pin-count">0 pins</span>
         </header>
 
-        <section class="upload-panel" aria-label="Private data controls">
-          <div class="upload-actions">
-            <label class="primary-button" for="csv-upload">Upload CSV</label>
-            <input id="csv-upload" class="hidden-input" type="file" accept=".csv,text/csv" />
-            <button class="secondary-button" type="button" id="clear-csv">Clear local data</button>
-          </div>
-          <p class="helper-text" id="storage-status">
-            Your CSV stays in this browser and is restored from local storage on reload.
-          </p>
-        </section>
-
         <section class="import-panel" aria-label="Online link import">
           <div class="section-header">
             <h2>Add link</h2>
@@ -51,7 +40,50 @@
           </p>
         </section>
 
-        <section class="review-editor" id="link-review-panel" aria-label="Review imported row" hidden>
+        <section class="upload-panel" aria-label="Private data controls">
+          <div class="upload-actions utility-actions">
+            <label class="utility-button" for="csv-upload">Upload CSV</label>
+            <input id="csv-upload" class="hidden-input" type="file" accept=".csv,text/csv" />
+            <button class="utility-button" type="button" id="clear-csv">Clear local data</button>
+          </div>
+          <p class="helper-text helper-text-subtle" id="storage-status">
+            Your CSV stays in this browser and is restored from local storage on reload.
+          </p>
+        </section>
+
+        <div class="warning-box" id="warning-box" aria-live="polite" hidden>
+          <strong>Skipped rows</strong>
+          <ul id="warning-list"></ul>
+        </div>
+
+        <p class="empty-state" id="list-empty-state">
+          Upload a CSV to keep your private holiday data local to this browser.
+        </p>
+
+        <ul class="location-list" id="mapped-list" aria-label="Mapped locations" hidden></ul>
+
+        <section class="review-panel" id="review-panel" aria-label="Needs review" hidden>
+          <div class="section-header">
+            <h2>Needs review</h2>
+            <span class="review-count" id="review-count">0</span>
+          </div>
+          <ul class="location-list review-list" id="review-list"></ul>
+        </section>
+      </aside>
+
+      <section class="map-panel">
+        <div id="map" class="map" aria-label="Holiday map"></div>
+      </section>
+
+      <div class="modal-backdrop" id="link-review-backdrop" hidden>
+        <section
+          class="review-modal"
+          id="link-review-panel"
+          aria-label="Review imported row"
+          aria-modal="true"
+          role="dialog"
+          hidden
+        >
           <div class="section-header">
             <h2>Review import</h2>
           </div>
@@ -91,30 +123,7 @@
             </div>
           </form>
         </section>
-
-        <div class="warning-box" id="warning-box" aria-live="polite" hidden>
-          <strong>Skipped rows</strong>
-          <ul id="warning-list"></ul>
-        </div>
-
-        <p class="empty-state" id="list-empty-state">
-          Upload a CSV to keep your private holiday data local to this browser.
-        </p>
-
-        <ul class="location-list" id="mapped-list" aria-label="Mapped locations" hidden></ul>
-
-        <section class="review-panel" id="review-panel" aria-label="Needs review" hidden>
-          <div class="section-header">
-            <h2>Needs review</h2>
-            <span class="review-count" id="review-count">0</span>
-          </div>
-          <ul class="location-list review-list" id="review-list"></ul>
-        </section>
-      </aside>
-
-      <section class="map-panel">
-        <div id="map" class="map" aria-label="Holiday map"></div>
-      </section>
+      </div>
     </main>
     <script>
       import "../scripts/holiday-map";
@@ -236,16 +245,15 @@
 
   .upload-panel {
     display: grid;
-    gap: 0.8rem;
-    padding: 1rem;
-    border: 1px solid rgba(148, 163, 184, 0.18);
+    gap: 0.55rem;
+    padding: 0.85rem 0.95rem;
+    border: 1px solid rgba(148, 163, 184, 0.12);
     border-radius: 20px;
-    background: rgba(255, 255, 255, 0.84);
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    background: rgba(255, 255, 255, 0.58);
   }
 
   .import-panel,
-  .review-editor {
+  .review-modal {
     display: grid;
     gap: 0.8rem;
     padding: 1rem;
@@ -259,6 +267,10 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
+  }
+
+  .utility-actions {
+    gap: 0.55rem;
   }
 
   .import-form {
@@ -316,8 +328,34 @@
     gap: 0.75rem;
   }
 
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+    background: rgba(15, 23, 42, 0.42);
+    backdrop-filter: blur(8px);
+    z-index: 30;
+  }
+
+  .modal-backdrop[hidden],
+  .review-modal[hidden] {
+    display: none !important;
+  }
+
+  .review-modal {
+    width: min(720px, calc(100vw - 2.5rem));
+    max-height: min(760px, calc(100vh - 2.5rem));
+    overflow: auto;
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+  }
+
   .primary-button,
-  .secondary-button {
+  .secondary-button,
+  .utility-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -346,10 +384,22 @@
     color: var(--text);
   }
 
+  .utility-button {
+    min-height: 2.35rem;
+    padding: 0.55rem 0.8rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--muted);
+    border-color: rgba(148, 163, 184, 0.16);
+    box-shadow: none;
+  }
+
   .primary-button:hover,
   .primary-button:focus-visible,
   .secondary-button:hover,
-  .secondary-button:focus-visible {
+  .secondary-button:focus-visible,
+  .utility-button:hover,
+  .utility-button:focus-visible {
     transform: translateY(-1px);
     border-color: rgba(15, 118, 110, 0.32);
     outline: none;
@@ -376,6 +426,11 @@
 
   .helper-text.is-error {
     color: #b91c1c;
+  }
+
+  .helper-text-subtle {
+    font-size: 0.84rem;
+    color: #7c8aa0;
   }
 
   .section-header {

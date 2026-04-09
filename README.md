@@ -59,7 +59,7 @@ The Netlify-hosted app also exposes `/api/import-link` so the website can scrape
 Website import behavior:
 
 - Complete imports auto-save immediately when `title`, `type`, valid coordinates, and `link` are present.
-- Incomplete imports open an in-app review form before saving.
+- Incomplete imports open a review modal before saving.
 - Imported rows are merged into the current browser-local CSV state.
 
 When a page exposes a main image in metadata, the importer stores it in the `photo` column so the map popup can show it.
@@ -125,9 +125,32 @@ npm run import:links -- --dry-run --urls "https://www.finn.no/reise/feriehus-hyt
 
 The app is intended to be deployed on Netlify.
 
+Repo-side deployment config:
+
+- `netlify.toml` defines the build command, publish directory, function bundling, and Node version.
+- `.github/workflows/ci.yml` runs unit tests, Playwright tests, and the Astro build on pushes and pull requests.
+
+Recommended Netlify setup:
+
+1. Create a new Netlify site from this GitHub repository.
+2. Use the default production branch (`main`).
+3. Keep the build command as `npm run build`.
+4. Keep the publish directory as `dist`.
+5. Let Netlify read `netlify.toml` for Node version and function bundling.
+6. Netlify's default deploy URL is used automatically.
+7. Set `PUBLIC_SITE_URL` only if you want to override it with a custom domain.
+
 Useful environment variables:
 
 ```sh
 PUBLIC_SITE_URL="https://your-site.netlify.app" \
 npm run build
 ```
+
+On Netlify itself, this variable is optional because the build falls back to Netlify's built-in deploy URL environment variables.
+
+Recommended deploy flow:
+
+- Pull requests get GitHub CI plus Netlify preview deploys.
+- Merges to `main` trigger the production deploy.
+- If a deploy regresses, use Netlify's previous deploy rollback.

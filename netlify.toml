@@ -2,5 +2,9 @@
   command = "npm run build"
   publish = "dist"
 
+[build.environment]
+  NODE_VERSION = "25.6.1"
+  ASTRO_TELEMETRY_DISABLED = "1"
+
 [functions]
   node_bundler = "esbuild"

@@ -35,6 +35,13 @@ npm run dev
 npm run import:links -- --help
 ```
 
+## Deployment
+
+- The repo is configured for Netlify deployment via `netlify.toml`.
+- GitHub CI is configured in `.github/workflows/ci.yml` and runs unit tests, Playwright tests, and the Astro build.
+- Netlify preview deploys should be used for pull requests, with production deploys from `main`.
+- `PUBLIC_SITE_URL` is optional on Netlify because the build can fall back to Netlify deploy URL environment variables; set it when you want to force a custom domain.
+
 ## Data Contract
 
 Location data uses the same CSV schema as `src/data/locations.csv`, but the main app now loads CSV content from a browser upload and stores it in local storage.
@@ -70,6 +77,7 @@ Rules:
   - right pane with the map
 - The sidebar includes upload controls for selecting a CSV file and clearing the saved browser copy.
 - The sidebar also includes an `Add link` flow that scrapes one supported URL online.
+- Incomplete online imports open a temporary review modal instead of occupying permanent sidebar space.
 - The sidebar header with `Holiday Map` and the pin count is sticky while the sidebar content scrolls.
 - The introductory page chrome was intentionally removed. Keep the interface focused on the list and map unless the user asks for more surrounding content.
 - Location list items act as the primary control surface and highlight the active selection.

@@ -50,6 +50,7 @@ const linkImportFormElement = document.getElementById("link-import-form");
 const linkImportUrlElement = document.getElementById("link-import-url");
 const linkImportSubmitElement = document.getElementById("link-import-submit");
 const linkImportStatusElement = document.getElementById("link-import-status");
+const linkReviewBackdropElement = document.getElementById("link-review-backdrop");
 const linkReviewPanelElement = document.getElementById("link-review-panel");
 const linkReviewFormElement = document.getElementById("link-review-form");
 const linkReviewNotesElement = document.getElementById("link-review-notes");
@@ -171,6 +172,7 @@ if (
   linkImportFormElement instanceof HTMLFormElement &&
   linkImportUrlElement instanceof HTMLInputElement &&
   linkImportSubmitElement instanceof HTMLButtonElement &&
+  linkReviewBackdropElement instanceof HTMLElement &&
   linkReviewPanelElement instanceof HTMLElement &&
   linkReviewFormElement instanceof HTMLFormElement &&
   linkReviewNotesElement instanceof HTMLElement &&
@@ -187,6 +189,7 @@ if (
   let markers: L.Marker[] = [];
   let activeLocationButtons: HTMLButtonElement[] = [];
   let pendingReviewDraft: EditableImportedLocationDraft | undefined;
+  let reviewReturnFocusElement: HTMLElement | undefined;
 
   const preventMapScrollFrom = (element: HTMLElement | null) => {
     if (!element) {
@@ -419,13 +422,18 @@ if (
 
   const closeReviewPanel = () => {
     pendingReviewDraft = undefined;
+    linkReviewBackdropElement.hidden = true;
     linkReviewPanelElement.hidden = true;
     linkReviewNotesElement.textContent = "";
     linkReviewFormElement.reset();
+    document.body.style.overflow = "";
+    reviewReturnFocusElement?.focus();
+    reviewReturnFocusElement = undefined;
   };
 
   const openReviewPanel = (row: ImportedLocationDraft) => {
     pendingReviewDraft = createReviewDraft(row);
+    reviewReturnFocusElement = document.activeElement instanceof HTMLElement ? document.activeElement : linkImportUrlElement;
     reviewTitleElement.value = row.title;
     reviewTypeElement.value = row.type;
     reviewDescriptionElement.value = row.description;
@@ -435,7 +443,10 @@ if (
     reviewPhotoElement.value = row.photo;
     linkReviewNotesElement.textContent =
       row.notes.length > 0 ? row.notes.join(" ") : "Complete the missing fields before saving this row.";
+    linkReviewBackdropElement.hidden = false;
     linkReviewPanelElement.hidden = false;
+    document.body.style.overflow = "hidden";
+    reviewTitleElement.focus();
   };
 
   const importLink = async (url: string) => {
@@ -510,6 +521,12 @@ if (
   });
 
   clearButtonElement.addEventListener("click", () => {
+    const confirmed = window.confirm("Clear the saved CSV and imported rows from this browser?");
+
+    if (!confirmed) {
+      return;
+    }
+
     window.localStorage.removeItem(storageKey);
     uploadInputElement.value = "";
     clearRenderedState();
@@ -552,6 +569,14 @@ if (
   linkReviewCancelElement.addEventListener("click", () => {
     closeReviewPanel();
     setImportStatusMessage("Cancelled review.");
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !linkReviewPanelElement.hidden) {
+      event.preventDefault();
+      closeReviewPanel();
+      setImportStatusMessage("Cancelled review.");
+    }
   });
 
   linkReviewFormElement.addEventListener("submit", (event) => {
