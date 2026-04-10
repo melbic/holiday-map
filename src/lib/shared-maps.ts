@@ -16,6 +16,7 @@ type SharedMapRow = {
 
 type SharedLocationRow = {
   id: string;
+  position?: number;
   title: string;
   type: string;
   description: string;
@@ -58,6 +59,18 @@ export type CreatedSharedMap = {
 type SharedMapMutationResult = {
   share_id: string;
   last_changed_at: string;
+};
+
+type SharedLocationInsert = {
+  map_id: string;
+  position: number;
+  title: string;
+  type: string;
+  description: string;
+  latitude: number | null;
+  longitude: number | null;
+  link: string | null;
+  photo: string | null;
 };
 
 export class ShareMapValidationError extends Error {}
@@ -109,7 +122,7 @@ function verifyEditSecret(secret: string, storedHash: string) {
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 
-function toLocationInserts(mapId: string, csvText: string) {
+function toLocationInserts(mapId: string, csvText: string): SharedLocationInsert[] {
   const parsed = ensureShareableCsv(csvText);
 
   return [...parsed.locations, ...parsed.pendingLocations].map((location, index) => ({

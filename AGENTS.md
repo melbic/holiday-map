@@ -45,6 +45,7 @@ npx supabase db reset --local
 - The repo is configured for Netlify deployment via `netlify.toml`.
 - GitHub CI is configured in `.github/workflows/ci.yml` and runs unit tests, Playwright tests, and the Astro build.
 - Playwright uses the current CI Node runtime directly in GitHub Actions; only local dev/test startup should rely on `nvm use 25.6.1`.
+- The `netlify` CLI package is a development-only dependency; keep it in `devDependencies` unless runtime code starts importing it.
 - Netlify preview deploys should be used for pull requests, with production deploys from `main`.
 - `PUBLIC_SITE_URL` is optional on Netlify because the build can fall back to Netlify deploy URL environment variables; set it when you want to force a custom domain.
 - Share-by-link backend work uses Supabase and expects `SUPABASE_URL` plus `SUPABASE_SECRET_KEY` in server-side environment variables.
@@ -79,6 +80,7 @@ Rules:
 - Keep the UI simple by default: map, markers, popups, and the companion location list.
 - Treat CSV content as untrusted input and escape any user-visible HTML.
 - The runtime data source for the UI is browser-local CSV state stored in `localStorage`, not a bundled import in the page component.
+- The browser app entry under `src/scripts/holiday-map.ts` is split into smaller helper modules under `src/scripts/holiday-map/`; prefer extending those focused modules instead of growing the entry file again.
 
 ## Current UI Behavior
 
