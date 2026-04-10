@@ -20,6 +20,11 @@
       "source": "supabase/agent-skills",
       "sourceType": "github",
       "computedHash": "f4cd7570115d97af6bcb2946eb891a958c8d04a43b479871c9ccadbc670ad058"
+    },
+    "typescript-expert": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "136deef983dfdd5f312e6fe0850fc4e87400f3ddce7a8ee9082c426e958e83f0"
     }
   }
 }
