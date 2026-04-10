@@ -32,6 +32,7 @@ const typeEmojiMap: Record<string, string> = {
 };
 
 const storageKey = "holiday-map:locations-csv";
+const appShellElement = document.getElementById("app-shell");
 
 const mapElement = document.getElementById("map");
 const mappedListElement = document.getElementById("mapped-list");
@@ -39,12 +40,14 @@ const reviewListElement = document.getElementById("review-list");
 const warningBoxElement = document.getElementById("warning-box");
 const warningListElement = document.getElementById("warning-list");
 const reviewPanelElement = document.getElementById("review-panel");
+const importPanelElement = document.querySelector(".import-panel");
 const emptyStateElement = document.getElementById("list-empty-state");
 const pinCountElement = document.getElementById("pin-count");
 const reviewCountElement = document.getElementById("review-count");
 const storageStatusElement = document.getElementById("storage-status");
 const uploadInputElement = document.getElementById("csv-upload");
 const downloadButtonElement = document.getElementById("download-csv");
+const shareButtonElement = document.getElementById("share-map");
 const clearButtonElement = document.getElementById("clear-csv");
 const listPanelElement = document.querySelector(".list-panel");
 const linkImportFormElement = document.getElementById("link-import-form");
@@ -63,6 +66,20 @@ const reviewLatitudeElement = document.getElementById("review-latitude");
 const reviewLongitudeElement = document.getElementById("review-longitude");
 const reviewLinkElement = document.getElementById("review-link");
 const reviewPhotoElement = document.getElementById("review-photo");
+const shareMapBackdropElement = document.getElementById("share-map-backdrop");
+const shareMapPanelElement = document.getElementById("share-map-panel");
+const shareMapFormElement = document.getElementById("share-map-form");
+const shareMapNameElement = document.getElementById("share-map-name");
+const shareMapStatusElement = document.getElementById("share-map-status");
+const shareMapResultsElement = document.getElementById("share-map-results");
+const sharePublicUrlElement = document.getElementById("share-public-url");
+const shareEditUrlElement = document.getElementById("share-edit-url");
+const shareMapSubmitElement = document.getElementById("share-map-submit");
+const shareMapCopyPublicElement = document.getElementById("share-map-copy-public");
+const shareMapCopyEditElement = document.getElementById("share-map-copy-edit");
+const shareMapCancelElement = document.getElementById("share-map-cancel");
+const updateSharedMapButtonElement = document.getElementById("update-shared-map");
+const uploadLabelElement = document.querySelector('label[for="csv-upload"]');
 
 const escapeHtml = (value: string) =>
   String(value)
@@ -158,12 +175,33 @@ const setStatusMessage = (message: string, isError = false) => {
   storageStatusElement.classList.toggle("is-error", isError);
 };
 
+const setShareStatusMessage = (message: string, isError = false) => {
+  if (!(shareMapStatusElement instanceof HTMLElement)) {
+    return;
+  }
+
+  shareMapStatusElement.textContent = message;
+  shareMapStatusElement.classList.toggle("is-error", isError);
+};
+
 const buildDownloadFilename = () => {
   const date = new Date();
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `holiday-map-${year}-${month}-${day}.csv`;
+};
+
+const getSharedViewContext = () => {
+  if (!(appShellElement instanceof HTMLElement)) {
+    return { shareId: "", editSecret: "", isSharedView: false };
+  }
+
+  return {
+    shareId: appShellElement.dataset.shareId ?? "",
+    editSecret: appShellElement.dataset.editSecret ?? "",
+    isSharedView: appShellElement.dataset.sharedView === "true",
+  };
 };
 
 if (
@@ -173,10 +211,12 @@ if (
   warningBoxElement instanceof HTMLElement &&
   warningListElement instanceof HTMLUListElement &&
   reviewPanelElement instanceof HTMLElement &&
+  importPanelElement instanceof HTMLElement &&
   emptyStateElement instanceof HTMLElement &&
   pinCountElement instanceof HTMLElement &&
   reviewCountElement instanceof HTMLElement &&
   downloadButtonElement instanceof HTMLButtonElement &&
+  shareButtonElement instanceof HTMLButtonElement &&
   uploadInputElement instanceof HTMLInputElement &&
   clearButtonElement instanceof HTMLButtonElement &&
   linkImportFormElement instanceof HTMLFormElement &&
@@ -193,16 +233,77 @@ if (
   reviewLatitudeElement instanceof HTMLInputElement &&
   reviewLongitudeElement instanceof HTMLInputElement &&
   reviewLinkElement instanceof HTMLInputElement &&
-  reviewPhotoElement instanceof HTMLInputElement
+  reviewPhotoElement instanceof HTMLInputElement &&
+  shareMapBackdropElement instanceof HTMLElement &&
+  shareMapPanelElement instanceof HTMLElement &&
+  shareMapFormElement instanceof HTMLFormElement &&
+  shareMapNameElement instanceof HTMLInputElement &&
+  shareMapStatusElement instanceof HTMLElement &&
+  shareMapResultsElement instanceof HTMLElement &&
+  sharePublicUrlElement instanceof HTMLInputElement &&
+  shareEditUrlElement instanceof HTMLInputElement &&
+  shareMapSubmitElement instanceof HTMLButtonElement &&
+  shareMapCopyPublicElement instanceof HTMLButtonElement &&
+  shareMapCopyEditElement instanceof HTMLButtonElement &&
+  shareMapCancelElement instanceof HTMLButtonElement &&
+  updateSharedMapButtonElement instanceof HTMLButtonElement &&
+  uploadLabelElement instanceof HTMLLabelElement
 ) {
+  const sharedView = getSharedViewContext();
   let map: L.Map | undefined;
   let markers: L.Marker[] = [];
   let activeLocationButtons: HTMLButtonElement[] = [];
   let pendingReviewDraft: EditableImportedLocationDraft | undefined;
   let reviewReturnFocusElement: HTMLElement | undefined;
+  let shareReturnFocusElement: HTMLElement | undefined;
+  let currentCsvText = "";
+  let currentSharedMapName: string | null = null;
+  let canEditSharedMap = false;
+
+  const getStoredCsvText = () => window.localStorage.getItem(storageKey);
+
+  const hasShareableLocalMap = () => {
+    const csvText = getStoredCsvText();
+
+    if (!csvText) {
+      return false;
+    }
+
+    try {
+      return parseLocationsCsv(csvText).locations.length > 0;
+    } catch {
+      return false;
+    }
+  };
+
+  const hasShareableCsv = (csvText: string) => {
+    if (!csvText) {
+      return false;
+    }
+
+    try {
+      return parseLocationsCsv(csvText).locations.length > 0;
+    } catch {
+      return false;
+    }
+  };
+
+  const syncSharedViewControls = () => {
+    const isReadOnlySharedView = sharedView.isSharedView && !canEditSharedMap;
+    const isEditableSharedView = sharedView.isSharedView && canEditSharedMap;
+
+    importPanelElement.hidden = isReadOnlySharedView;
+    uploadLabelElement.hidden = isReadOnlySharedView;
+    uploadInputElement.hidden = isReadOnlySharedView;
+    clearButtonElement.hidden = isReadOnlySharedView;
+    updateSharedMapButtonElement.hidden = !isEditableSharedView;
+  };
 
   const updateCsvUtilityState = () => {
-    downloadButtonElement.disabled = !window.localStorage.getItem(storageKey);
+    const hasCsv = !!getStoredCsvText();
+    downloadButtonElement.disabled = sharedView.isSharedView ? false : !hasCsv;
+    shareButtonElement.disabled = sharedView.isSharedView || !hasShareableLocalMap();
+    updateSharedMapButtonElement.disabled = !canEditSharedMap || !hasShareableCsv(currentCsvText);
   };
 
   const preventMapScrollFrom = (element: HTMLElement | null) => {
@@ -411,6 +512,7 @@ if (
   const renderParsedCsv = (csvText: string, statusMessage: string) => {
     const { locations, pendingLocations, warnings } = parseLocationsCsv(csvText);
 
+    currentCsvText = csvText;
     pinCountElement.textContent = `${locations.length} ${locations.length === 1 ? "pin" : "pins"}`;
     renderWarnings(warnings);
     renderMappedList(locations);
@@ -443,6 +545,33 @@ if (
     document.body.style.overflow = "";
     reviewReturnFocusElement?.focus();
     reviewReturnFocusElement = undefined;
+  };
+
+  const closeSharePanel = () => {
+    shareMapBackdropElement.hidden = true;
+    shareMapPanelElement.hidden = true;
+    shareMapResultsElement.hidden = true;
+    shareMapFormElement.reset();
+    shareMapCopyPublicElement.hidden = true;
+    shareMapCopyEditElement.hidden = true;
+    sharePublicUrlElement.value = "";
+    shareEditUrlElement.value = "";
+    setShareStatusMessage("Create a public read link plus a private edit link for this map.");
+    document.body.style.overflow = "";
+    shareReturnFocusElement?.focus();
+    shareReturnFocusElement = undefined;
+  };
+
+  const openSharePanel = () => {
+    shareReturnFocusElement = document.activeElement instanceof HTMLElement ? document.activeElement : shareButtonElement;
+    shareMapBackdropElement.hidden = false;
+    shareMapPanelElement.hidden = false;
+    shareMapResultsElement.hidden = true;
+    shareMapCopyPublicElement.hidden = true;
+    shareMapCopyEditElement.hidden = true;
+    setShareStatusMessage("Create a public read link plus a private edit link for this map.");
+    document.body.style.overflow = "hidden";
+    shareMapNameElement.focus();
   };
 
   const openReviewPanel = (row: ImportedLocationDraft) => {
@@ -481,8 +610,78 @@ if (
     return payload as ImportedLocationDraft;
   };
 
+  const createShareMap = async (name: string, csvText: string) => {
+    const response = await fetch("/api/share-map", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        csvText,
+      }),
+    });
+
+    const payload = (await response.json()) as
+      | { publicUrl: string; editUrl: string; shareId: string; lastChangedAt: string }
+      | { error?: string };
+
+    if (!response.ok) {
+      throw new Error(typeof payload === "object" && payload && "error" in payload ? payload.error || "Could not create share link." : "Could not create share link.");
+    }
+
+    return payload as { publicUrl: string; editUrl: string; shareId: string; lastChangedAt: string };
+  };
+
+  const putSharedMap = async (shareId: string, name: string | null, csvText: string, editSecret: string) => {
+    const response = await fetch(`/api/share-map/${shareId}`, {
+      method: "PUT",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        name: name ?? "",
+        csvText,
+        editSecret,
+      }),
+    });
+
+    const payload = (await response.json()) as { lastChangedAt: string } | { error?: string };
+
+    if (!response.ok) {
+      throw new Error(
+        typeof payload === "object" && payload && "error" in payload
+          ? payload.error || "Could not update shared map."
+          : "Could not update shared map.",
+      );
+    }
+
+    return payload as { lastChangedAt: string };
+  };
+
+  const fetchSharedMap = async (shareId: string, editSecret: string) => {
+    const endpoint = new URL(`/api/share-map/${shareId}`, window.location.origin);
+
+    if (editSecret) {
+      endpoint.searchParams.set("edit", editSecret);
+    }
+
+    const response = await fetch(endpoint);
+    const payload = (await response.json()) as
+      | { name: string | null; shareId: string; lastChangedAt: string; csvText: string; canEdit: boolean }
+      | { error?: string };
+
+    if (!response.ok) {
+      throw new Error(typeof payload === "object" && payload && "error" in payload ? payload.error || "Could not load shared map." : "Could not load shared map.");
+    }
+
+    return payload as { name: string | null; shareId: string; lastChangedAt: string; csvText: string; canEdit: boolean };
+  };
+
   const clearRenderedState = () => {
     destroyMap();
+    currentCsvText = "";
+    currentSharedMapName = null;
     mappedListElement.innerHTML = "";
     mappedListElement.hidden = true;
     reviewListElement.innerHTML = "";
@@ -495,6 +694,32 @@ if (
     activeLocationButtons = [];
     renderMap([]);
     updateCsvUtilityState();
+  };
+
+  const restoreSharedCsv = async () => {
+    if (!sharedView.isSharedView || !sharedView.shareId) {
+      return false;
+    }
+
+    try {
+      const sharedMap = await fetchSharedMap(sharedView.shareId, sharedView.editSecret);
+      currentSharedMapName = sharedMap.name;
+      canEditSharedMap = sharedMap.canEdit;
+      syncSharedViewControls();
+      renderParsedCsv(sharedMap.csvText, sharedMap.canEdit ? "Loaded shared map in edit mode." : "Loaded shared map.");
+      if (sharedMap.canEdit) {
+        window.localStorage.setItem(storageKey, sharedMap.csvText);
+      }
+      updateCsvUtilityState();
+      return true;
+    } catch (error) {
+      canEditSharedMap = false;
+      syncSharedViewControls();
+      clearRenderedState();
+      const message = error instanceof Error ? error.message : "Could not load shared map.";
+      setStatusMessage(message, true);
+      return true;
+    }
   };
 
   const restoreStoredCsv = () => {
@@ -549,8 +774,41 @@ if (
     setStatusMessage("Cleared the saved CSV from this browser.");
   });
 
+  updateSharedMapButtonElement.addEventListener("click", async () => {
+    if (!sharedView.isSharedView || !canEditSharedMap || !sharedView.shareId || !sharedView.editSecret) {
+      return;
+    }
+
+    const csvText = window.localStorage.getItem(storageKey) ?? currentCsvText;
+
+    if (!csvText) {
+      updateCsvUtilityState();
+      setStatusMessage("Nothing to update yet.", true);
+      return;
+    }
+
+    updateSharedMapButtonElement.disabled = true;
+    setStatusMessage("Updating shared map...");
+
+    try {
+      const updated = await putSharedMap(
+        sharedView.shareId,
+        currentSharedMapName,
+        csvText,
+        sharedView.editSecret,
+      );
+      currentCsvText = csvText;
+      setStatusMessage(`Updated shared map. Last changed at ${new Date(updated.lastChangedAt).toLocaleString()}.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not update shared map.";
+      setStatusMessage(message, true);
+    } finally {
+      updateCsvUtilityState();
+    }
+  });
+
   downloadButtonElement.addEventListener("click", () => {
-    const csvText = window.localStorage.getItem(storageKey);
+    const csvText = sharedView.isSharedView ? currentCsvText : window.localStorage.getItem(storageKey);
 
     if (!csvText) {
       updateCsvUtilityState();
@@ -570,6 +828,14 @@ if (
     URL.revokeObjectURL(url);
 
     setStatusMessage("Downloaded the current CSV.");
+  });
+
+  shareButtonElement.addEventListener("click", () => {
+    if (shareButtonElement.disabled || sharedView.isSharedView) {
+      return;
+    }
+
+    openSharePanel();
   });
 
   linkImportFormElement.addEventListener("submit", async (event) => {
@@ -610,11 +876,75 @@ if (
     setImportStatusMessage("Cancelled review.");
   });
 
+  shareMapCancelElement.addEventListener("click", () => {
+    closeSharePanel();
+    setStatusMessage("Cancelled share creation.");
+  });
+
+  const copyShareLinkToClipboard = async (text: string, successMessage: string) => {
+    if (!navigator.clipboard?.writeText) {
+      setShareStatusMessage("Clipboard copy is not available in this browser.", true);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setShareStatusMessage(successMessage);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not copy share link.";
+      setShareStatusMessage(message, true);
+    }
+  };
+
+  shareMapCopyPublicElement.addEventListener("click", async () => {
+    await copyShareLinkToClipboard(sharePublicUrlElement.value, "Copied the public link.");
+  });
+
+  shareMapCopyEditElement.addEventListener("click", async () => {
+    await copyShareLinkToClipboard(shareEditUrlElement.value, "Copied the private edit link.");
+  });
+
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !linkReviewPanelElement.hidden) {
       event.preventDefault();
       closeReviewPanel();
       setImportStatusMessage("Cancelled review.");
+      return;
+    }
+
+    if (event.key === "Escape" && !shareMapPanelElement.hidden) {
+      event.preventDefault();
+      closeSharePanel();
+      setStatusMessage("Cancelled share creation.");
+    }
+  });
+
+  shareMapFormElement.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const csvText = getStoredCsvText();
+
+    if (!csvText) {
+      setShareStatusMessage("Nothing to share yet.", true);
+      return;
+    }
+
+    shareMapSubmitElement.disabled = true;
+    setShareStatusMessage("Creating share links...");
+
+    try {
+      const shared = await createShareMap(shareMapNameElement.value.trim(), csvText);
+      sharePublicUrlElement.value = shared.publicUrl;
+      shareEditUrlElement.value = shared.editUrl;
+      shareMapResultsElement.hidden = false;
+      shareMapCopyPublicElement.hidden = false;
+      shareMapCopyEditElement.hidden = false;
+      setShareStatusMessage("Created public and private share links.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not create share link.";
+      setShareStatusMessage(message, true);
+    } finally {
+      shareMapSubmitElement.disabled = false;
     }
   });
 
@@ -642,6 +972,12 @@ if (
     setImportStatusMessage(`Saved ${finalized.title}.`);
   });
 
-  restoreStoredCsv();
-  updateCsvUtilityState();
+  syncSharedViewControls();
+
+  restoreSharedCsv().then((handled) => {
+    if (!handled) {
+      restoreStoredCsv();
+      updateCsvUtilityState();
+    }
+  });
 }

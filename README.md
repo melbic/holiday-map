@@ -39,6 +39,7 @@ The site no longer bundles location data into the page.
 - Use the `Upload CSV` control in the sidebar to load a file into the app.
 - Use `Add link` to scrape a supported URL online and merge the result into the local browser CSV.
 - Use `Download CSV` to export the current browser-local CSV with a dated filename.
+- Use `Share map` to create a public read link plus a private edit link when the local CSV contains at least one valid mapped location.
 - The selected CSV is stored only in your browser's `localStorage` and restored on reload.
 - Use `Clear local data` to remove the saved browser copy.
 - Uploaded/imported data stays in the browser until you replace or clear it.
@@ -62,6 +63,13 @@ Website import behavior:
 - Complete imports auto-save immediately when `title`, `type`, valid coordinates, and `link` are present.
 - Incomplete imports open a review modal before saving.
 - Imported rows are merged into the current browser-local CSV state.
+
+Share-by-link uses Supabase-backed API routes.
+
+- Public shared routes use `/map/{shareId}` and render the shared map in read-only mode with only `Download CSV` exposed.
+- Private edit links use `/map/{shareId}?edit={secret}` and unlock upload, link import, clear, and `Update shared map` for that shared map.
+- Shared-map updates replace the server-stored CSV content and keep the same public and private URLs.
+- Anonymous share creation is server-side rate-limited per client IP to reduce abuse of the public share endpoint.
 
 When a page exposes a main image in metadata, the importer stores it in the `photo` column so the map popup can show it.
 
@@ -149,6 +157,39 @@ npm run build
 ```
 
 On Netlify itself, this variable is optional because the build falls back to Netlify's built-in deploy URL environment variables.
+
+Share-map backend environment variables:
+
+```sh
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_SECRET_KEY="your-secret-key"
+```
+
+Hosted Supabase also needs the SQL migrations from `supabase/migrations/` applied, not just the initial table creation.
+
+## Local Supabase
+
+The repo now includes a local Supabase project in `supabase/` for real share-map testing.
+
+Common local commands:
+
+```sh
+npx supabase start
+npx supabase db reset --local
+npm run test:shared-maps
+npm run test:e2e:share:live
+npm run verify:local-supabase
+```
+
+Notes:
+
+- `scripts/with-local-supabase-env.mjs` reads `npx supabase status -o env` and maps the local values to `SUPABASE_URL` and `SUPABASE_SECRET_KEY` automatically.
+- `npm run test:shared-maps` runs real integration tests against the local `maps` and `locations` tables.
+- `npm run test:e2e:share:live` runs the share flow through the Astro app and real local Supabase instead of stubbing the API.
+- `npm run verify:local-supabase` runs the local Supabase start/reset plus both real verification commands in sequence.
+- The mocked Playwright suite in `npm run test:e2e` remains useful for fast frontend regression coverage.
+- Shared-map writes now run through database RPC functions so create/update is atomic.
+- Hosted Supabase should apply all repo migrations so RLS, RPC functions, and stable shared-location ordering are present.
 
 Recommended deploy flow:
 
