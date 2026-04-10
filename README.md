@@ -69,6 +69,7 @@ Share-by-link uses Supabase-backed API routes.
 - Public shared routes use `/map/{shareId}` and render the shared map in read-only mode with only `Download CSV` exposed.
 - Private edit links use `/map/{shareId}?edit={secret}` and unlock upload, link import, clear, and `Update shared map` for that shared map.
 - Shared-map updates replace the server-stored CSV content and keep the same public and private URLs.
+- Anonymous share creation is server-side rate-limited per client IP to reduce abuse of the public share endpoint.
 
 When a page exposes a main image in metadata, the importer stores it in the `photo` column so the map popup can show it.
 

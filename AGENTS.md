@@ -93,6 +93,7 @@ Rules:
 - Private edit links use `/map/[shareId]?edit=...` and unlock upload, online import, clear, and `Update shared map` after the server confirms the edit secret.
 - Shared-map updates replace the stored shared CSV while preserving the same share URLs.
 - Visiting a public shared link does not clear the browser's private local CSV.
+- Anonymous shared-map creation is rate-limited per client IP on the server-side API route.
 - Shared-map create/update writes are atomic through database RPC functions, and shared locations keep a stable stored order.
 - Supabase RPC hardening keeps `create_shared_map_atomic` and `update_shared_map_atomic` callable only by `service_role`; if you change those revokes, keep the explicit execute grants in the same migration set.
 - Shared-map RPC functions use `security definer` with `search_path = ''`; keep all relation references schema-qualified if you edit them.

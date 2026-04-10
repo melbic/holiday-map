@@ -19,6 +19,7 @@ vi.mock("./shared-maps.ts", () => ({
 describe("share map API routes", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.resetModules();
   });
 
   it("creates a shared map and returns public and edit URLs", async () => {
@@ -159,6 +160,37 @@ describe("share map API routes", () => {
     const response = await POST({ request, site: new URL("https://holiday-map.example") } as never);
 
     expect(response.status).toBe(400);
+  });
+
+  it("returns 429 when share creation is rate limited", async () => {
+    createSharedMap.mockResolvedValue({
+      shareId: "share-123",
+      editSecret: "secret-456",
+      lastChangedAt: "2026-04-10T00:00:00.000Z",
+    });
+
+    const { POST } = await import("../pages/api/share-map");
+    const createRequest = () => new Request("https://example.com/api/share-map", {
+      method: "POST",
+      body: JSON.stringify({ name: "Trip", csvText: "title,type,description,latitude,longitude,link,photo\nA,airport,,1,2,," }),
+      headers: {
+        "content-type": "application/json",
+        "x-forwarded-for": "203.0.113.10",
+      },
+    });
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await POST({ request: createRequest(), site: new URL("https://holiday-map.example") } as never);
+      expect(response.status).toBe(200);
+    }
+
+    const limitedResponse = await POST({ request: createRequest(), site: new URL("https://holiday-map.example") } as never);
+    const body = await limitedResponse.json();
+
+    expect(limitedResponse.status).toBe(429);
+    expect(limitedResponse.headers.get("retry-after")).toBeTruthy();
+    expect(body).toEqual({ error: "Too many share creation requests. Please try again shortly." });
+    expect(createSharedMap).toHaveBeenCalledTimes(5);
   });
 
   it("returns 404 when updating a missing shared map", async () => {

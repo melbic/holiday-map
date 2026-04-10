@@ -4,6 +4,16 @@ import { ShareMapValidationError, createSharedMap } from "../../lib/shared-maps.
 
 export const prerender = false;
 
+const SHARE_MAP_RATE_LIMIT_WINDOW_MS = 60_000;
+const SHARE_MAP_RATE_LIMIT_MAX_REQUESTS = 5;
+
+type ShareMapRateLimitEntry = {
+  count: number;
+  resetAt: number;
+};
+
+const shareMapRateLimit = new Map<string, ShareMapRateLimitEntry>();
+
 function json(body: unknown, init?: ResponseInit): Response {
   return new Response(JSON.stringify(body), {
     ...init,
@@ -14,7 +24,55 @@ function json(body: unknown, init?: ResponseInit): Response {
   });
 }
 
+function getClientAddress(request: Request) {
+  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+
+  return forwardedFor
+    || request.headers.get("cf-connecting-ip")?.trim()
+    || request.headers.get("x-real-ip")?.trim()
+    || "unknown";
+}
+
+function consumeShareMapRateLimit(request: Request) {
+  const clientAddress = getClientAddress(request);
+  const now = Date.now();
+  const existing = shareMapRateLimit.get(clientAddress);
+
+  if (!existing || existing.resetAt <= now) {
+    const nextEntry = {
+      count: 1,
+      resetAt: now + SHARE_MAP_RATE_LIMIT_WINDOW_MS,
+    };
+    shareMapRateLimit.set(clientAddress, nextEntry);
+    return { limited: false, retryAfterSeconds: 0 };
+  }
+
+  if (existing.count >= SHARE_MAP_RATE_LIMIT_MAX_REQUESTS) {
+    return {
+      limited: true,
+      retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
+    };
+  }
+
+  existing.count += 1;
+  return { limited: false, retryAfterSeconds: 0 };
+}
+
 export const POST: APIRoute = async ({ request, site }) => {
+  const rateLimit = consumeShareMapRateLimit(request);
+
+  if (rateLimit.limited) {
+    return json(
+      { error: "Too many share creation requests. Please try again shortly." },
+      {
+        status: 429,
+        headers: {
+          "retry-after": String(rateLimit.retryAfterSeconds),
+        },
+      },
+    );
+  }
+
   let payload: unknown;
 
   try {
