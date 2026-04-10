@@ -6,14 +6,14 @@ const secretKey = process.env.SUPABASE_SECRET_KEY;
 
 test.skip(!supabaseUrl || !secretKey, "requires local Supabase env");
 
-const admin = createClient(supabaseUrl!, secretKey!, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-});
-
 test.beforeEach(async () => {
+  const admin = createClient(supabaseUrl!, secretKey!, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+
   const { error: deleteLocationsError } = await admin.from("locations").delete().not("id", "is", null);
 
   if (deleteLocationsError) {

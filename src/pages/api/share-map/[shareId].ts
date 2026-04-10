@@ -1,6 +1,12 @@
 import type { APIRoute } from "astro";
 
-import { fetchSharedMap, updateSharedMap } from "../../../lib/shared-maps.ts";
+import {
+  ShareMapAuthError,
+  ShareMapNotFoundError,
+  ShareMapValidationError,
+  fetchSharedMap,
+  updateSharedMap,
+} from "../../../lib/shared-maps.ts";
 
 export const prerender = false;
 
@@ -77,12 +83,11 @@ export const PUT: APIRoute = async ({ params, request }) => {
     return json(updated, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not update shared map.";
-    const status =
-      message === "Shared map not found."
-        ? 404
-        : message === "Invalid edit secret." || message.includes("at least one valid mapped location")
-          ? 400
-          : 500;
+    const status = error instanceof ShareMapNotFoundError
+      ? 404
+      : error instanceof ShareMapAuthError || error instanceof ShareMapValidationError
+        ? 400
+        : 500;
     return json({ error: message }, { status });
   }
 };

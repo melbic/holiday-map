@@ -15,6 +15,7 @@ type SharedMapRow = {
 };
 
 type SharedLocationRow = {
+  id: string;
   title: string;
   type: string;
   description: string;
@@ -54,6 +55,15 @@ export type CreatedSharedMap = {
   lastChangedAt: string;
 };
 
+type SharedMapMutationResult = {
+  share_id: string;
+  last_changed_at: string;
+};
+
+export class ShareMapValidationError extends Error {}
+export class ShareMapNotFoundError extends Error {}
+export class ShareMapAuthError extends Error {}
+
 function getSupabaseAdmin() {
   const url = import.meta.env.SUPABASE_URL;
   const secretKey = import.meta.env.SUPABASE_SECRET_KEY;
@@ -74,7 +84,7 @@ function ensureShareableCsv(csvText: string) {
   const parsed = parseLocationsCsv(csvText);
 
   if (parsed.locations.length === 0) {
-    throw new Error("A shared map needs at least one valid mapped location.");
+    throw new ShareMapValidationError("A shared map needs at least one valid mapped location.");
   }
 
   return parsed;
@@ -102,8 +112,9 @@ function verifyEditSecret(secret: string, storedHash: string) {
 function toLocationInserts(mapId: string, csvText: string) {
   const parsed = ensureShareableCsv(csvText);
 
-  return [...parsed.locations, ...parsed.pendingLocations].map((location) => ({
+  return [...parsed.locations, ...parsed.pendingLocations].map((location, index) => ({
     map_id: mapId,
+    position: index,
     title: location.title,
     type: location.type,
     description: location.description,
@@ -147,8 +158,10 @@ async function getSharedMapByShareId(shareId: string): Promise<SharedMapWithLoca
 
   const { data: locations, error: locationsError } = await supabase
     .from("locations")
-    .select("title,type,description,latitude,longitude,link,photo")
+    .select("id,title,type,description,latitude,longitude,link,photo")
     .eq("map_id", map.id)
+    .order("position", { ascending: true })
+    .order("id", { ascending: true })
     .returns<SharedLocationRow[]>();
 
   if (locationsError) {
@@ -163,32 +176,25 @@ async function getSharedMapByShareId(shareId: string): Promise<SharedMapWithLoca
 
 export async function createSharedMap(input: CreateSharedMapInput): Promise<CreatedSharedMap> {
   const supabase = getSupabaseAdmin();
-  ensureShareableCsv(input.csvText);
-
   const editSecret = randomBytes(24).toString("base64url");
-  const { data: map, error: mapError } = await supabase
-    .from("maps")
-    .insert({
-      name: input.name?.trim() || null,
-      edit_secret_hash: hashEditSecret(editSecret),
-    })
-    .select("id,share_id,last_changed_at")
-    .single<{ id: string; share_id: string; last_changed_at: string }>();
+  const mapId = crypto.randomUUID();
+  const { data, error } = await supabase.rpc("create_shared_map_atomic", {
+    p_map_id: mapId,
+    p_name: input.name?.trim() || null,
+    p_edit_secret_hash: hashEditSecret(editSecret),
+    p_locations: toLocationInserts(mapId, input.csvText),
+  });
 
-  if (mapError || !map) {
-    throw new Error(mapError?.message || "Could not create shared map.");
-  }
+  const mutation = Array.isArray(data) ? data[0] : data;
 
-  const { error: locationsError } = await supabase.from("locations").insert(toLocationInserts(map.id, input.csvText));
-
-  if (locationsError) {
-    throw new Error(locationsError.message);
+  if (error || !mutation) {
+    throw new Error(error?.message || "Could not create shared map.");
   }
 
   return {
-    shareId: map.share_id,
+    shareId: mutation.share_id,
     editSecret,
-    lastChangedAt: map.last_changed_at,
+    lastChangedAt: mutation.last_changed_at,
   };
 }
 
@@ -215,40 +221,26 @@ export async function updateSharedMap(shareId: string, input: UpdateSharedMapInp
   const sharedMap = await getSharedMapByShareId(shareId);
 
   if (!sharedMap) {
-    throw new Error("Shared map not found.");
+    throw new ShareMapNotFoundError("Shared map not found.");
   }
 
   if (!verifyEditSecret(input.editSecret, sharedMap.map.edit_secret_hash)) {
-    throw new Error("Invalid edit secret.");
+    throw new ShareMapAuthError("Invalid edit secret.");
   }
 
-  const { error: deleteError } = await supabase.from("locations").delete().eq("map_id", sharedMap.map.id);
+  const { data, error } = await supabase.rpc("update_shared_map_atomic", {
+    p_map_id: sharedMap.map.id,
+    p_name: input.name?.trim() || null,
+    p_locations: toLocationInserts(sharedMap.map.id, input.csvText),
+  });
 
-  if (deleteError) {
-    throw new Error(deleteError.message);
-  }
+  const mutation = Array.isArray(data) ? data[0] : data;
 
-  const { error: insertError } = await supabase.from("locations").insert(toLocationInserts(sharedMap.map.id, input.csvText));
-
-  if (insertError) {
-    throw new Error(insertError.message);
-  }
-
-  const { data: updatedMap, error: updateError } = await supabase
-    .from("maps")
-    .update({
-      name: input.name?.trim() || null,
-      last_changed_at: new Date().toISOString(),
-    })
-    .eq("id", sharedMap.map.id)
-    .select("last_changed_at")
-    .single<{ last_changed_at: string }>();
-
-  if (updateError || !updatedMap) {
-    throw new Error(updateError?.message || "Could not update shared map.");
+  if (error || !mutation) {
+    throw new Error(error?.message || "Could not update shared map.");
   }
 
   return {
-    lastChangedAt: updatedMap.last_changed_at,
+    lastChangedAt: mutation.last_changed_at,
   };
 }

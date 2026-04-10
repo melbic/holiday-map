@@ -164,6 +164,8 @@ SUPABASE_URL="https://your-project.supabase.co"
 SUPABASE_SECRET_KEY="your-secret-key"
 ```
 
+Hosted Supabase also needs the SQL migrations from `supabase/migrations/` applied, not just the initial table creation.
+
 ## Local Supabase
 
 The repo now includes a local Supabase project in `supabase/` for real share-map testing.
@@ -185,6 +187,8 @@ Notes:
 - `npm run test:e2e:share:live` runs the share flow through the Astro app and real local Supabase instead of stubbing the API.
 - `npm run verify:local-supabase` runs the local Supabase start/reset plus both real verification commands in sequence.
 - The mocked Playwright suite in `npm run test:e2e` remains useful for fast frontend regression coverage.
+- Shared-map writes now run through database RPC functions so create/update is atomic.
+- Hosted Supabase should apply all repo migrations so RLS, RPC functions, and stable shared-location ordering are present.
 
 Recommended deploy flow:
 

@@ -710,9 +710,6 @@ if (
       if (sharedMap.canEdit) {
         window.localStorage.setItem(storageKey, sharedMap.csvText);
       }
-      else {
-        window.localStorage.removeItem(storageKey);
-      }
       updateCsvUtilityState();
       return true;
     } catch (error) {
@@ -884,14 +881,27 @@ if (
     setStatusMessage("Cancelled share creation.");
   });
 
+  const copyShareLinkToClipboard = async (text: string, successMessage: string) => {
+    if (!navigator.clipboard?.writeText) {
+      setShareStatusMessage("Clipboard copy is not available in this browser.", true);
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      setShareStatusMessage(successMessage);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not copy share link.";
+      setShareStatusMessage(message, true);
+    }
+  };
+
   shareMapCopyPublicElement.addEventListener("click", async () => {
-    await navigator.clipboard.writeText(sharePublicUrlElement.value);
-    setShareStatusMessage("Copied the public link.");
+    await copyShareLinkToClipboard(sharePublicUrlElement.value, "Copied the public link.");
   });
 
   shareMapCopyEditElement.addEventListener("click", async () => {
-    await navigator.clipboard.writeText(shareEditUrlElement.value);
-    setShareStatusMessage("Copied the private edit link.");
+    await copyShareLinkToClipboard(shareEditUrlElement.value, "Copied the private edit link.");
   });
 
   document.addEventListener("keydown", (event) => {

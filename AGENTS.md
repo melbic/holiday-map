@@ -49,6 +49,7 @@ npx supabase db reset --local
 - Share-by-link backend work uses Supabase and expects `SUPABASE_URL` plus `SUPABASE_SECRET_KEY` in server-side environment variables.
 - The repo includes a local Supabase project under `supabase/` for real share-map testing.
 - The repo also includes a local skill under `.agents/skills/local-supabase-verification/` for the real Supabase verification workflow.
+- Hosted Supabase must apply the full repo migration set under `supabase/migrations/`; the shared-map schema, RLS, RPCs, and RPC permissions now ship in the initial shared-map migration.
 
 ## Data Contract
 
@@ -91,6 +92,10 @@ Rules:
 - Public shared routes use `/map/[shareId]` and expose a read-only view with `Download CSV` available.
 - Private edit links use `/map/[shareId]?edit=...` and unlock upload, online import, clear, and `Update shared map` after the server confirms the edit secret.
 - Shared-map updates replace the stored shared CSV while preserving the same share URLs.
+- Visiting a public shared link does not clear the browser's private local CSV.
+- Shared-map create/update writes are atomic through database RPC functions, and shared locations keep a stable stored order.
+- Supabase RPC hardening keeps `create_shared_map_atomic` and `update_shared_map_atomic` callable only by `service_role`; if you change those revokes, keep the explicit execute grants in the same migration set.
+- Shared-map RPC functions use `security definer` with `search_path = ''`; keep all relation references schema-qualified if you edit them.
 - Real local share-map verification can run through `npm run test:shared-maps` and `npm run test:e2e:share:live` after `npx supabase start` and `npx supabase db reset --local`.
 - The sidebar header with `Holiday Map` and the pin count is sticky while the sidebar content scrolls.
 - The introductory page chrome was intentionally removed. Keep the interface focused on the list and map unless the user asks for more surrounding content.

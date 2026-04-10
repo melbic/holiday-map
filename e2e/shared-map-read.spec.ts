@@ -4,6 +4,13 @@ test("loads a shared map in public read-only mode", async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
+    window.localStorage.setItem(
+      "holiday-map:locations-csv",
+      [
+        "title,type,description,latitude,longitude,link,photo",
+        "Private Airport,airport,Main arrival point,47.45,8.56,https://example.com/private,",
+      ].join("\n"),
+    );
   });
 
   await page.route("**/api/share-map/share-123", async (route) => {
@@ -31,6 +38,7 @@ test("loads a shared map in public read-only mode", async ({ page }) => {
   await expect(page.locator("#clear-csv")).toBeHidden();
   await expect(page.locator("#link-import-form")).toBeHidden();
   await expect(page.locator("#storage-status")).toContainText("Loaded shared map.");
+  await expect(page.evaluate(() => window.localStorage.getItem("holiday-map:locations-csv"))).resolves.toContain("Private Airport");
 });
 
 test("keeps shared map read-only when edit token is invalid", async ({ page }) => {

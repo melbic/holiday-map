@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 
-import { createSharedMap } from "../../lib/shared-maps.ts";
+import { ShareMapValidationError, createSharedMap } from "../../lib/shared-maps.ts";
 
 export const prerender = false;
 
@@ -52,7 +52,7 @@ export const POST: APIRoute = async ({ request, site }) => {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Could not create shared map.";
-    const status = message.includes("at least one valid mapped location") || message.includes("missing") ? 400 : 500;
+    const status = error instanceof ShareMapValidationError ? 400 : 500;
     return json({ error: message }, { status });
   }
 };
