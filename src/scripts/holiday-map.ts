@@ -742,6 +742,14 @@ if (
     }
   };
 
+  const resetUploadSelection = () => {
+    // Clearing before the picker opens ensures selecting the same file still fires `change`.
+    uploadInputElement.value = "";
+  };
+
+  uploadLabelElement.addEventListener("click", resetUploadSelection);
+  uploadInputElement.addEventListener("click", resetUploadSelection);
+
   uploadInputElement.addEventListener("change", async () => {
     const file = uploadInputElement.files?.[0];
 
@@ -754,10 +762,11 @@ if (
       renderParsedCsv(csvText, `Loaded ${file.name} and saved it in this browser.`);
       window.localStorage.setItem(storageKey, csvText);
       updateCsvUtilityState();
-      uploadInputElement.value = "";
     } catch (error) {
       const message = error instanceof Error ? error.message : "Could not load the selected CSV.";
       setStatusMessage(message, true);
+    } finally {
+      uploadInputElement.value = "";
     }
   });
 

@@ -64,3 +64,41 @@ test("uploads a CSV and renders map sidebar data", async ({ page }) => {
   await expect(page.locator("#mapped-list")).toContainText("Airport");
   await expect(page.locator("#storage-status")).toContainText("Loaded CSV from local storage.");
 });
+
+test("re-uploading the same CSV file updates the page without a reload", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
+
+  await page.goto("/");
+
+  const firstCsv = [
+    "title,type,description,latitude,longitude,link,photo",
+    "Airport,airport,Main arrival point,47.45,8.56,https://example.com/airport,",
+  ].join("\n");
+
+  const updatedCsv = [
+    "title,type,description,latitude,longitude,link,photo",
+    "Updated Airport,airport,Updated arrival point,48.1,9.2,https://example.com/updated-airport,",
+  ].join("\n");
+
+  await page.locator("#csv-upload").setInputFiles({
+    name: "locations.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(firstCsv),
+  });
+
+  await expect(page.locator("#mapped-list")).toContainText("Airport");
+
+  await page.locator("label[for='csv-upload']").click();
+  await page.locator("#csv-upload").setInputFiles({
+    name: "locations.csv",
+    mimeType: "text/csv",
+    buffer: Buffer.from(updatedCsv),
+  });
+
+  await expect(page.locator("#mapped-list")).toContainText("Updated Airport");
+  await expect(page.locator("#mapped-list")).not.toContainText("Main arrival point");
+  await expect(page.locator("#storage-status")).toContainText("Loaded locations.csv and saved it in this browser.");
+});

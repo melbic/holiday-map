@@ -98,6 +98,7 @@ Rules:
 - Anonymous shared-map creation is rate-limited per client IP on the server-side API route.
 - Shared-map create/update writes are atomic through database RPC functions, and shared locations keep a stable stored order.
 - Share and import review dialogs render as centered full-window overlays above the split layout.
+- The page referrer policy is `strict-origin-when-cross-origin` so OpenStreetMap tile requests receive the site origin without leaking shared edit query strings cross-origin.
 - Supabase RPC hardening keeps `create_shared_map_atomic` and `update_shared_map_atomic` callable only by `service_role`; if you change those revokes, keep the explicit execute grants in the same migration set.
 - Shared-map RPC functions use `security definer` with `search_path = ''`; keep all relation references schema-qualified if you edit them.
 - Real local share-map verification can run through `npm run test:shared-maps` and `npm run test:e2e:share:live` after `npx supabase start` and `npx supabase db reset --local`.
