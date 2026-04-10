@@ -426,6 +426,7 @@ if (
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: "&copy; OpenStreetMap contributors",
+      referrerPolicy: "strict-origin-when-cross-origin",
     }).addTo(map);
 
     preventMapScrollFrom(listPanelElement instanceof HTMLElement ? listPanelElement : null);
