@@ -96,96 +96,96 @@ const isEditRequest = isSharedView && editSecret !== "";
         <div id="map" class="map" aria-label="Holiday map"></div>
       </section>
 
-      <div class="modal-backdrop" id="link-review-backdrop" hidden>
-        <section
-          class="review-modal"
-          id="link-review-panel"
-          aria-label="Review imported row"
-          aria-modal="true"
-          role="dialog"
-          hidden
-        >
-          <div class="section-header">
-            <h2>Review import</h2>
-          </div>
-          <p class="helper-text" id="link-review-notes"></p>
-          <form class="review-form" id="link-review-form">
-            <label class="field-group">
-              <span>Title</span>
-              <input class="text-input" id="review-title" name="title" type="text" required />
-            </label>
-            <label class="field-group">
-              <span>Type</span>
-              <input class="text-input" id="review-type" name="type" type="text" required />
-            </label>
-            <label class="field-group field-group-wide">
-              <span>Description</span>
-              <textarea class="text-area" id="review-description" name="description" rows="3"></textarea>
-            </label>
-            <label class="field-group">
-              <span>Latitude</span>
-              <input class="text-input" id="review-latitude" name="latitude" type="number" step="any" />
-            </label>
-            <label class="field-group">
-              <span>Longitude</span>
-              <input class="text-input" id="review-longitude" name="longitude" type="number" step="any" />
-            </label>
-            <label class="field-group field-group-wide">
-              <span>Link</span>
-              <input class="text-input" id="review-link" name="link" type="url" required />
-            </label>
-            <label class="field-group field-group-wide">
-              <span>Photo</span>
-              <input class="text-input" id="review-photo" name="photo" type="url" />
-            </label>
-            <div class="review-actions field-group-wide">
-              <button class="primary-button" type="submit">Save row</button>
-              <button class="secondary-button" type="button" id="link-review-cancel">Cancel</button>
-            </div>
-          </form>
-        </section>
-      </div>
-
-      <div class="modal-backdrop" id="share-map-backdrop" hidden>
-        <section
-          class="review-modal share-modal"
-          id="share-map-panel"
-          aria-label="Share map"
-          aria-modal="true"
-          role="dialog"
-          hidden
-        >
-          <div class="section-header">
-            <h2>Share map</h2>
-          </div>
-          <p class="helper-text" id="share-map-status">
-            Create a public read link plus a private edit link for this map.
-          </p>
-          <form class="review-form" id="share-map-form">
-            <label class="field-group field-group-wide">
-              <span>Name</span>
-              <input class="text-input" id="share-map-name" name="name" type="text" placeholder="Optional map name" />
-            </label>
-            <div class="share-results field-group-wide" id="share-map-results" hidden>
-              <label class="field-group field-group-wide">
-                <span>Public link</span>
-                <input class="text-input" id="share-public-url" type="text" readonly />
-              </label>
-              <label class="field-group field-group-wide">
-                <span>Edit link</span>
-                <input class="text-input" id="share-edit-url" type="text" readonly />
-              </label>
-            </div>
-            <div class="review-actions field-group-wide">
-              <button class="primary-button" type="submit" id="share-map-submit">Create share link</button>
-              <button class="secondary-button" type="button" id="share-map-copy-public" hidden>Copy public link</button>
-              <button class="secondary-button" type="button" id="share-map-copy-edit" hidden>Copy edit link</button>
-              <button class="secondary-button" type="button" id="share-map-cancel">Cancel</button>
-            </div>
-          </form>
-        </section>
-      </div>
     </main>
+    <div class="modal-backdrop" id="link-review-backdrop" hidden>
+      <section
+        class="review-modal"
+        id="link-review-panel"
+        aria-label="Review imported row"
+        aria-modal="true"
+        role="dialog"
+        hidden
+      >
+        <div class="section-header">
+          <h2>Review import</h2>
+        </div>
+        <p class="helper-text" id="link-review-notes"></p>
+        <form class="review-form" id="link-review-form">
+          <label class="field-group">
+            <span>Title</span>
+            <input class="text-input" id="review-title" name="title" type="text" required />
+          </label>
+          <label class="field-group">
+            <span>Type</span>
+            <input class="text-input" id="review-type" name="type" type="text" required />
+          </label>
+          <label class="field-group field-group-wide">
+            <span>Description</span>
+            <textarea class="text-area" id="review-description" name="description" rows="3"></textarea>
+          </label>
+          <label class="field-group">
+            <span>Latitude</span>
+            <input class="text-input" id="review-latitude" name="latitude" type="number" step="any" />
+          </label>
+          <label class="field-group">
+            <span>Longitude</span>
+            <input class="text-input" id="review-longitude" name="longitude" type="number" step="any" />
+          </label>
+          <label class="field-group field-group-wide">
+            <span>Link</span>
+            <input class="text-input" id="review-link" name="link" type="url" required />
+          </label>
+          <label class="field-group field-group-wide">
+            <span>Photo</span>
+            <input class="text-input" id="review-photo" name="photo" type="url" />
+          </label>
+          <div class="review-actions field-group-wide">
+            <button class="primary-button" type="submit">Save row</button>
+            <button class="secondary-button" type="button" id="link-review-cancel">Cancel</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div class="modal-backdrop" id="share-map-backdrop" hidden>
+      <section
+        class="review-modal share-modal"
+        id="share-map-panel"
+        aria-label="Share map"
+        aria-modal="true"
+        role="dialog"
+        hidden
+      >
+        <div class="section-header">
+          <h2>Share map</h2>
+        </div>
+        <p class="helper-text" id="share-map-status">
+          Create a public read link plus a private edit link for this map.
+        </p>
+        <form class="review-form" id="share-map-form">
+          <label class="field-group field-group-wide">
+            <span>Name</span>
+            <input class="text-input" id="share-map-name" name="name" type="text" placeholder="Optional map name" />
+          </label>
+          <div class="share-results field-group-wide" id="share-map-results" hidden>
+            <label class="field-group field-group-wide">
+              <span>Public link</span>
+              <input class="text-input" id="share-public-url" type="text" readonly />
+            </label>
+            <label class="field-group field-group-wide">
+              <span>Edit link</span>
+              <input class="text-input" id="share-edit-url" type="text" readonly />
+            </label>
+          </div>
+          <div class="review-actions field-group-wide">
+            <button class="primary-button" type="submit" id="share-map-submit">Create share link</button>
+            <button class="secondary-button" type="button" id="share-map-copy-public" hidden>Copy public link</button>
+            <button class="secondary-button" type="button" id="share-map-copy-edit" hidden>Copy edit link</button>
+            <button class="secondary-button" type="button" id="share-map-cancel">Cancel</button>
+          </div>
+        </form>
+      </section>
+    </div>
     <script>
       import "../scripts/holiday-map";
     </script>
@@ -244,9 +244,10 @@ const isEditRequest = isSharedView && editSecret !== "";
   .text-area { resize: vertical; min-height: 5.75rem; }
   .review-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
   .share-results { display: grid; gap: 0.75rem; padding: 0.85rem; border-radius: 18px; background: rgba(15, 118, 110, 0.06); border: 1px solid rgba(15, 118, 110, 0.12); }
-  .modal-backdrop { position: fixed; inset: 0; display: grid; place-items: center; padding: 1.25rem; background: rgba(15, 23, 42, 0.42); backdrop-filter: blur(8px); z-index: 30; }
+  .modal-backdrop { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; width: 100vw; min-height: 100vh; min-height: 100dvh; padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); overflow: auto; background: rgba(15, 23, 42, 0.48); backdrop-filter: blur(8px); z-index: 2000; }
   .modal-backdrop[hidden], .review-modal[hidden], .import-panel[hidden], .utility-button[hidden] { display: none !important; }
-  .review-modal { width: min(720px, calc(100vw - 2.5rem)); max-height: min(760px, calc(100vh - 2.5rem)); overflow: auto; border-radius: 26px; background: rgba(255, 255, 255, 0.97); box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22); }
+  .review-modal { position: relative; width: min(720px, calc(100vw - 2rem)); max-width: 100%; max-height: min(760px, calc(100vh - 2rem)); max-height: min(760px, calc(100dvh - 2rem)); margin: auto; overflow: auto; border-radius: 26px; background: rgba(255, 255, 255, 0.98); box-shadow: 0 30px 80px rgba(15, 23, 42, 0.28); }
+  .share-modal { width: min(560px, calc(100vw - 2rem)); }
   .primary-button, .secondary-button, .utility-button { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: 0.7rem 1rem; border-radius: 14px; border: 1px solid rgba(15, 118, 110, 0.14); font: inherit; font-weight: 700; cursor: pointer; transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease; }
   .primary-button { background: var(--accent); color: white; box-shadow: 0 10px 20px rgba(15, 118, 110, 0.18); }
   .secondary-button { background: rgba(255, 255, 255, 0.92); color: var(--text); }
