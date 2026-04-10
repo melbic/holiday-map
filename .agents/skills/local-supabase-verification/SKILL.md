@@ -17,7 +17,7 @@ Use this skill for:
 - resetting the local database and applying migrations
 - running the real `shared-maps` integration tests
 - running the real share-map browser flow against Astro plus local Supabase
-- debugging local Supabase env wiring for `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
+- debugging local Supabase env wiring for `SUPABASE_URL` and `SUPABASE_SECRET_KEY`
 
 ## Primary Commands
 
@@ -70,7 +70,7 @@ npx supabase status -o env
 and maps the local values to:
 
 - `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY`
 
 The wrapper already includes a retry loop for container restarts after `supabase db reset --local`.
 

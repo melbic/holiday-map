@@ -161,7 +161,7 @@ Share-map backend environment variables:
 
 ```sh
 SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+SUPABASE_SECRET_KEY="your-secret-key"
 ```
 
 ## Local Supabase
@@ -180,7 +180,7 @@ npm run verify:local-supabase
 
 Notes:
 
-- `scripts/with-local-supabase-env.mjs` reads `npx supabase status -o env` and maps the local values to `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` automatically.
+- `scripts/with-local-supabase-env.mjs` reads `npx supabase status -o env` and maps the local values to `SUPABASE_URL` and `SUPABASE_SECRET_KEY` automatically.
 - `npm run test:shared-maps` runs real integration tests against the local `maps` and `locations` tables.
 - `npm run test:e2e:share:live` runs the share flow through the Astro app and real local Supabase instead of stubbing the API.
 - `npm run verify:local-supabase` runs the local Supabase start/reset plus both real verification commands in sequence.

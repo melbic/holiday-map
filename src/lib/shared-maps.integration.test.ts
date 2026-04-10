@@ -4,11 +4,11 @@ import { createClient } from "@supabase/supabase-js";
 import { createSharedMap, fetchSharedMap, updateSharedMap } from "./shared-maps.ts";
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const secretKey = process.env.SUPABASE_SECRET_KEY;
 
-const describeIfSupabase = supabaseUrl && serviceRoleKey ? describe : describe.skip;
-const admin = supabaseUrl && serviceRoleKey
-  ? createClient(supabaseUrl, serviceRoleKey, {
+const describeIfSupabase = supabaseUrl && secretKey ? describe : describe.skip;
+const admin = supabaseUrl && secretKey
+  ? createClient(supabaseUrl, secretKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,

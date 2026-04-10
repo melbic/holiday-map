@@ -46,7 +46,7 @@ npx supabase db reset --local
 - GitHub CI is configured in `.github/workflows/ci.yml` and runs unit tests, Playwright tests, and the Astro build.
 - Netlify preview deploys should be used for pull requests, with production deploys from `main`.
 - `PUBLIC_SITE_URL` is optional on Netlify because the build can fall back to Netlify deploy URL environment variables; set it when you want to force a custom domain.
-- Share-by-link backend work uses Supabase and expects `SUPABASE_URL` plus `SUPABASE_SERVICE_ROLE_KEY` in server-side environment variables.
+- Share-by-link backend work uses Supabase and expects `SUPABASE_URL` plus `SUPABASE_SECRET_KEY` in server-side environment variables.
 - The repo includes a local Supabase project under `supabase/` for real share-map testing.
 - The repo also includes a local skill under `.agents/skills/local-supabase-verification/` for the real Supabase verification workflow.
 

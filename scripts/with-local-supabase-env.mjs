@@ -67,7 +67,7 @@ const child = spawn(command, args, {
     ...process.env,
     ...supabaseEnv,
     SUPABASE_URL: supabaseEnv.API_URL,
-    SUPABASE_SERVICE_ROLE_KEY: supabaseEnv.SERVICE_ROLE_KEY,
+    SUPABASE_SECRET_KEY: supabaseEnv.SECRET_KEY,
   },
   shell: process.platform === "win32",
 });

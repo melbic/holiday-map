@@ -2,11 +2,11 @@ import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const secretKey = process.env.SUPABASE_SECRET_KEY;
 
-test.skip(!supabaseUrl || !serviceRoleKey, "requires local Supabase env");
+test.skip(!supabaseUrl || !secretKey, "requires local Supabase env");
 
-const admin = createClient(supabaseUrl!, serviceRoleKey!, {
+const admin = createClient(supabaseUrl!, secretKey!, {
   auth: {
     persistSession: false,
     autoRefreshToken: false,
