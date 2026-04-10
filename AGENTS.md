@@ -44,6 +44,7 @@ npx supabase db reset --local
 
 - The repo is configured for Netlify deployment via `netlify.toml`.
 - GitHub CI is configured in `.github/workflows/ci.yml` and runs unit tests, Playwright tests, and the Astro build.
+- Playwright uses the current CI Node runtime directly in GitHub Actions; only local dev/test startup should rely on `nvm use 25.6.1`.
 - Netlify preview deploys should be used for pull requests, with production deploys from `main`.
 - `PUBLIC_SITE_URL` is optional on Netlify because the build can fall back to Netlify deploy URL environment variables; set it when you want to force a custom domain.
 - Share-by-link backend work uses Supabase and expects `SUPABASE_URL` plus `SUPABASE_SECRET_KEY` in server-side environment variables.
