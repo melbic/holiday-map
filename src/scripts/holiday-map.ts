@@ -75,11 +75,14 @@ const shareMapResultsElement = document.getElementById("share-map-results");
 const sharePublicUrlElement = document.getElementById("share-public-url");
 const shareEditUrlElement = document.getElementById("share-edit-url");
 const shareMapSubmitElement = document.getElementById("share-map-submit");
+const shareMapActionsElement = document.getElementById("share-map-actions");
 const shareMapCopyPublicElement = document.getElementById("share-map-copy-public");
 const shareMapCopyEditElement = document.getElementById("share-map-copy-edit");
-const shareMapCancelElement = document.getElementById("share-map-cancel");
+const shareMapCloseElement = document.getElementById("share-map-close");
 const updateSharedMapButtonElement = document.getElementById("update-shared-map");
 const uploadLabelElement = document.querySelector('label[for="csv-upload"]');
+
+type ShareModalState = "idle" | "submitting" | "created";
 
 const escapeHtml = (value: string) =>
   String(value)
@@ -243,9 +246,10 @@ if (
   sharePublicUrlElement instanceof HTMLInputElement &&
   shareEditUrlElement instanceof HTMLInputElement &&
   shareMapSubmitElement instanceof HTMLButtonElement &&
+  shareMapActionsElement instanceof HTMLElement &&
   shareMapCopyPublicElement instanceof HTMLButtonElement &&
   shareMapCopyEditElement instanceof HTMLButtonElement &&
-  shareMapCancelElement instanceof HTMLButtonElement &&
+  shareMapCloseElement instanceof HTMLButtonElement &&
   updateSharedMapButtonElement instanceof HTMLButtonElement &&
   uploadLabelElement instanceof HTMLLabelElement
 ) {
@@ -259,6 +263,39 @@ if (
   let currentCsvText = "";
   let currentSharedMapName: string | null = null;
   let canEditSharedMap = false;
+  let shareModalState: ShareModalState = "idle";
+  let shareSubmitLabel = shareMapSubmitElement.textContent?.trim() || "Create share link";
+
+  const setShareSubmitContent = (label: string, loading = false) => {
+    if (!loading) {
+      shareMapSubmitElement.textContent = label;
+      return;
+    }
+
+    shareMapSubmitElement.innerHTML = `<span class="button-spinner" aria-hidden="true"></span><span>${escapeHtml(label)}</span>`;
+  };
+
+  const renderShareModalState = (state: ShareModalState) => {
+    shareModalState = state;
+    const isSubmitting = state === "submitting";
+    const isCreated = state === "created";
+
+    shareMapResultsElement.hidden = !isCreated;
+    shareMapActionsElement.hidden = isCreated;
+    shareMapNameElement.readOnly = isCreated;
+    shareMapNameElement.disabled = isSubmitting;
+    shareMapSubmitElement.disabled = isSubmitting;
+    shareMapCloseElement.disabled = isSubmitting;
+    shareMapCopyPublicElement.disabled = !isCreated;
+    shareMapCopyEditElement.disabled = !isCreated;
+
+    if (state === "submitting") {
+      setShareSubmitContent("Creating share links...", true);
+      return;
+    }
+
+    setShareSubmitContent(shareSubmitLabel);
+  };
 
   const getStoredCsvText = () => window.localStorage.getItem(storageKey);
 
@@ -551,12 +588,10 @@ if (
   const closeSharePanel = () => {
     shareMapBackdropElement.hidden = true;
     shareMapPanelElement.hidden = true;
-    shareMapResultsElement.hidden = true;
     shareMapFormElement.reset();
-    shareMapCopyPublicElement.hidden = true;
-    shareMapCopyEditElement.hidden = true;
     sharePublicUrlElement.value = "";
     shareEditUrlElement.value = "";
+    renderShareModalState("idle");
     setShareStatusMessage("Create a public read link plus a private edit link for this map.");
     document.body.style.overflow = "";
     shareReturnFocusElement?.focus();
@@ -567,9 +602,7 @@ if (
     shareReturnFocusElement = document.activeElement instanceof HTMLElement ? document.activeElement : shareButtonElement;
     shareMapBackdropElement.hidden = false;
     shareMapPanelElement.hidden = false;
-    shareMapResultsElement.hidden = true;
-    shareMapCopyPublicElement.hidden = true;
-    shareMapCopyEditElement.hidden = true;
+    renderShareModalState("idle");
     setShareStatusMessage("Create a public read link plus a private edit link for this map.");
     document.body.style.overflow = "hidden";
     shareMapNameElement.focus();
@@ -886,9 +919,9 @@ if (
     setImportStatusMessage("Cancelled review.");
   });
 
-  shareMapCancelElement.addEventListener("click", () => {
+  shareMapCloseElement.addEventListener("click", () => {
     closeSharePanel();
-    setStatusMessage("Cancelled share creation.");
+    setStatusMessage("Closed share dialog.");
   });
 
   const copyShareLinkToClipboard = async (text: string, successMessage: string) => {
@@ -925,7 +958,7 @@ if (
     if (event.key === "Escape" && !shareMapPanelElement.hidden) {
       event.preventDefault();
       closeSharePanel();
-      setStatusMessage("Cancelled share creation.");
+      setStatusMessage("Closed share dialog.");
     }
   });
 
@@ -939,22 +972,19 @@ if (
       return;
     }
 
-    shareMapSubmitElement.disabled = true;
+    renderShareModalState("submitting");
     setShareStatusMessage("Creating share links...");
 
     try {
       const shared = await createShareMap(shareMapNameElement.value.trim(), csvText);
       sharePublicUrlElement.value = shared.publicUrl;
       shareEditUrlElement.value = shared.editUrl;
-      shareMapResultsElement.hidden = false;
-      shareMapCopyPublicElement.hidden = false;
-      shareMapCopyEditElement.hidden = false;
-      setShareStatusMessage("Created public and private share links.");
+      renderShareModalState("created");
+      setShareStatusMessage("Share links created.");
     } catch (error) {
+      renderShareModalState("idle");
       const message = error instanceof Error ? error.message : "Could not create share link.";
       setShareStatusMessage(message, true);
-    } finally {
-      shareMapSubmitElement.disabled = false;
     }
   });
 

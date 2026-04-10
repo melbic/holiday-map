@@ -51,7 +51,6 @@ npx supabase db reset --local
 - The repo includes a local Supabase project under `supabase/` for real share-map testing.
 - The repo also includes a local skill under `.agents/skills/local-supabase-verification/` for the real Supabase verification workflow.
 - Hosted Supabase must apply the full repo migration set under `supabase/migrations/`; the shared-map schema, RLS, RPCs, and RPC permissions now ship in the initial shared-map migration.
-- Hosted Supabase must apply the full repo migration set under `supabase/migrations/`; the shared-map schema, RLS, RPCs, and RPC permissions now ship in the initial shared-map migration.
 
 ## Data Contract
 
@@ -98,6 +97,7 @@ Rules:
 - Anonymous shared-map creation is rate-limited per client IP on the server-side API route.
 - Shared-map create/update writes are atomic through database RPC functions, and shared locations keep a stable stored order.
 - Share and import review dialogs render as centered full-window overlays above the split layout.
+- The share dialog now uses a minimal two-step flow: name plus create button first, then locked name plus inline-copy public/edit links after creation.
 - The page referrer policy is `strict-origin-when-cross-origin` so OpenStreetMap tile requests receive the site origin without leaking shared edit query strings cross-origin.
 - Supabase RPC hardening keeps `create_shared_map_atomic` and `update_shared_map_atomic` callable only by `service_role`; if you change those revokes, keep the explicit execute grants in the same migration set.
 - Shared-map RPC functions use `security definer` with `search_path = ''`; keep all relation references schema-qualified if you edit them.

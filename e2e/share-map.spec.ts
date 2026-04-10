@@ -5,13 +5,17 @@ const csvText = [
   "Airport,airport,Main arrival point,47.45,8.56,https://example.com/airport,https://images.example.com/airport.jpg",
 ].join("\n");
 
-test("creates public and edit share links from a local CSV", async ({ page }) => {
+test("creates public and edit share links from a local CSV", async ({ page, context, browserName }) => {
   await page.addInitScript(() => {
     window.localStorage.clear();
     window.sessionStorage.clear();
   });
 
+  test.skip(browserName !== "chromium", "Clipboard permission assertions are only enabled in Chromium.");
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+
   await page.route("**/api/share-map", async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 200));
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -38,13 +42,28 @@ test("creates public and edit share links from a local CSV", async ({ page }) =>
   await page.locator("#share-map").click();
 
   await expect(page.locator("#share-map-panel")).toBeVisible();
+  await expect(page.locator("#share-map-close")).toBeVisible();
+  await expect(page.locator("#share-map-cancel")).toHaveCount(0);
+  await expect(page.locator("#share-map-results")).toBeHidden();
   await page.locator("#share-map-name").fill("Spring Trip");
-  await page.locator("#share-map-submit").click();
+
+  const submitButton = page.locator("#share-map-submit");
+  await submitButton.click();
+  await expect(submitButton).toContainText("Creating share links...");
 
   await expect(page.locator("#share-map-results")).toBeVisible();
+  await expect(page.locator("#share-map-submit")).toBeHidden();
   await expect(page.locator("#share-public-url")).toHaveValue("https://holiday-map.example/map/share-123");
   await expect(page.locator("#share-edit-url")).toHaveValue(
     "https://holiday-map.example/map/share-123?edit=secret-456",
   );
-  await expect(page.locator("#share-map-status")).toContainText("Created public and private share links.");
+  await expect(page.locator("#share-map-name")).toHaveValue("Spring Trip");
+  await expect(page.locator("#share-map-name")).toHaveJSProperty("readOnly", true);
+  await expect(page.locator("#share-map-status")).toContainText("Share links created.");
+
+  await page.locator("#share-map-copy-public").click();
+  await expect(page.locator("#share-map-status")).toContainText("Copied the public link.");
+  await expect(page.evaluate(() => navigator.clipboard.readText())).resolves.toBe(
+    "https://holiday-map.example/map/share-123",
+  );
 });
