@@ -1,0 +1,10 @@
+---
+import AppShell from "../../components/app-shell.astro";
+
+const shareId = Astro.params.shareId ?? "";
+const editSecret = Astro.url.searchParams.get("edit") ?? "";
+
+export const prerender = false;
+---
+
+<AppShell shareId={shareId} editSecret={editSecret} />

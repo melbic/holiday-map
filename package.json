@@ -8,11 +8,15 @@
     "build": "astro build",
     "preview": "astro preview",
     "test": "vitest run",
+    "test:shared-maps": "node scripts/with-local-supabase-env.mjs vitest run src/lib/shared-maps.integration.test.ts",
     "test:e2e": "playwright test",
+    "test:e2e:share:live": "PLAYWRIGHT_USE_LOCAL_SUPABASE=1 node scripts/with-local-supabase-env.mjs playwright test e2e/share-map-live.spec.ts",
+    "verify:local-supabase": "npx supabase start && npx supabase db reset --local && npm run test:shared-maps && npm run test:e2e:share:live",
     "import:links": "node --experimental-strip-types scripts/import-links.ts"
   },
   "dependencies": {
     "@astrojs/netlify": "^7.0.6",
+    "@supabase/supabase-js": "^2.103.0",
     "astro": "^6.1.4",
     "cheerio": "^1.2.0",
     "leaflet": "^1.9.4",
@@ -22,6 +26,7 @@
     "@playwright/test": "^1.55.0",
     "@types/leaflet": "^1.9.17",
     "@types/node": "^25.5.2",
+    "supabase": "^2.89.1",
     "typescript": "^6.0.2",
     "vitest": "^4.1.2"
   }

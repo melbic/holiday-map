@@ -1,0 +1,1 @@
+-- Seed data is intentionally empty. Shared-map tests create their own rows.

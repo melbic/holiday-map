@@ -1,0 +1,327 @@
+---
+type Props = {
+  shareId?: string;
+  editSecret?: string;
+};
+
+const { shareId = "", editSecret = "" } = Astro.props;
+const isSharedView = shareId !== "";
+const isEditRequest = isSharedView && editSecret !== "";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Holiday Map</title>
+    <meta
+      name="description"
+      content="A private holiday planning map loaded from a local CSV file in your browser."
+    />
+  </head>
+  <body>
+    <main class="shell" id="app-shell" data-share-id={shareId} data-edit-secret={editSecret} data-shared-view={isSharedView ? "true" : "false"}>
+      <aside class="list-panel" aria-label="Locations">
+        <header class="list-header">
+          <div>
+            <p class="eyebrow">Holiday planner</p>
+            <h1>Holiday Map</h1>
+          </div>
+          <span class="pin-count" id="pin-count">0 pins</span>
+        </header>
+
+        <section class="import-panel" aria-label="Online link import" hidden={isSharedView && !isEditRequest ? true : undefined}>
+          <div class="section-header">
+            <h2>Add link</h2>
+          </div>
+          <form class="import-form" id="link-import-form">
+            <input
+              id="link-import-url"
+              class="text-input"
+              type="url"
+              name="url"
+              placeholder="https://example.com/place"
+              autocomplete="url"
+              required
+            />
+            <button class="primary-button" type="submit" id="link-import-submit">Import link</button>
+          </form>
+          <p class="helper-text" id="link-import-status">
+            Paste a supported link to scrape title, type, coordinates, and photo online.
+          </p>
+        </section>
+
+        <section class="upload-panel" aria-label="Private data controls">
+          <div class="upload-actions utility-actions">
+            <label class="utility-button" for="csv-upload" hidden={isSharedView && !isEditRequest ? true : undefined}>Upload CSV</label>
+            <input id="csv-upload" class="hidden-input" type="file" accept=".csv,text/csv" />
+            <button class="utility-button" type="button" id="download-csv" disabled>Download CSV</button>
+            <button class="utility-button" type="button" id="share-map" disabled hidden={isSharedView ? true : undefined}>Share map</button>
+            <button class="utility-button" type="button" id="update-shared-map" hidden={isEditRequest ? undefined : true}>Update shared map</button>
+            <button class="utility-button" type="button" id="clear-csv" hidden={isSharedView && !isEditRequest ? true : undefined}>Clear local data</button>
+          </div>
+          <p class="helper-text helper-text-subtle" id="storage-status">
+            {isSharedView
+              ? isEditRequest
+                ? "You are editing a shared map."
+                : "This is a shared map. Download it to keep your own copy locally."
+              : "Your CSV stays in this browser and is restored from local storage on reload."}
+          </p>
+        </section>
+
+        <div class="warning-box" id="warning-box" aria-live="polite" hidden>
+          <strong>Skipped rows</strong>
+          <ul id="warning-list"></ul>
+        </div>
+
+        <p class="empty-state" id="list-empty-state">
+          {isSharedView
+            ? "Loading shared map..."
+            : "Upload a CSV to keep your private holiday data local to this browser."}
+        </p>
+
+        <ul class="location-list" id="mapped-list" aria-label="Mapped locations" hidden></ul>
+
+        <section class="review-panel" id="review-panel" aria-label="Needs review" hidden>
+          <div class="section-header">
+            <h2>Needs review</h2>
+            <span class="review-count" id="review-count">0</span>
+          </div>
+          <ul class="location-list review-list" id="review-list"></ul>
+        </section>
+      </aside>
+
+      <section class="map-panel">
+        <div id="map" class="map" aria-label="Holiday map"></div>
+      </section>
+
+      <div class="modal-backdrop" id="link-review-backdrop" hidden>
+        <section
+          class="review-modal"
+          id="link-review-panel"
+          aria-label="Review imported row"
+          aria-modal="true"
+          role="dialog"
+          hidden
+        >
+          <div class="section-header">
+            <h2>Review import</h2>
+          </div>
+          <p class="helper-text" id="link-review-notes"></p>
+          <form class="review-form" id="link-review-form">
+            <label class="field-group">
+              <span>Title</span>
+              <input class="text-input" id="review-title" name="title" type="text" required />
+            </label>
+            <label class="field-group">
+              <span>Type</span>
+              <input class="text-input" id="review-type" name="type" type="text" required />
+            </label>
+            <label class="field-group field-group-wide">
+              <span>Description</span>
+              <textarea class="text-area" id="review-description" name="description" rows="3"></textarea>
+            </label>
+            <label class="field-group">
+              <span>Latitude</span>
+              <input class="text-input" id="review-latitude" name="latitude" type="number" step="any" />
+            </label>
+            <label class="field-group">
+              <span>Longitude</span>
+              <input class="text-input" id="review-longitude" name="longitude" type="number" step="any" />
+            </label>
+            <label class="field-group field-group-wide">
+              <span>Link</span>
+              <input class="text-input" id="review-link" name="link" type="url" required />
+            </label>
+            <label class="field-group field-group-wide">
+              <span>Photo</span>
+              <input class="text-input" id="review-photo" name="photo" type="url" />
+            </label>
+            <div class="review-actions field-group-wide">
+              <button class="primary-button" type="submit">Save row</button>
+              <button class="secondary-button" type="button" id="link-review-cancel">Cancel</button>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <div class="modal-backdrop" id="share-map-backdrop" hidden>
+        <section
+          class="review-modal share-modal"
+          id="share-map-panel"
+          aria-label="Share map"
+          aria-modal="true"
+          role="dialog"
+          hidden
+        >
+          <div class="section-header">
+            <h2>Share map</h2>
+          </div>
+          <p class="helper-text" id="share-map-status">
+            Create a public read link plus a private edit link for this map.
+          </p>
+          <form class="review-form" id="share-map-form">
+            <label class="field-group field-group-wide">
+              <span>Name</span>
+              <input class="text-input" id="share-map-name" name="name" type="text" placeholder="Optional map name" />
+            </label>
+            <div class="share-results field-group-wide" id="share-map-results" hidden>
+              <label class="field-group field-group-wide">
+                <span>Public link</span>
+                <input class="text-input" id="share-public-url" type="text" readonly />
+              </label>
+              <label class="field-group field-group-wide">
+                <span>Edit link</span>
+                <input class="text-input" id="share-edit-url" type="text" readonly />
+              </label>
+            </div>
+            <div class="review-actions field-group-wide">
+              <button class="primary-button" type="submit" id="share-map-submit">Create share link</button>
+              <button class="secondary-button" type="button" id="share-map-copy-public" hidden>Copy public link</button>
+              <button class="secondary-button" type="button" id="share-map-copy-edit" hidden>Copy edit link</button>
+              <button class="secondary-button" type="button" id="share-map-cancel">Cancel</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+    <script>
+      import "../scripts/holiday-map";
+    </script>
+  </body>
+</html>
+
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f3f6fb;
+    --panel: rgba(255, 255, 255, 0.82);
+    --panel-border: rgba(20, 35, 62, 0.08);
+    --text: #152033;
+    --muted: #64748b;
+    --accent: #0f766e;
+    --accent-strong: #0b5d57;
+    --accent-soft: rgba(15, 118, 110, 0.12);
+    --shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+    --list-card-radius: 22px;
+    --list-card-height: 96px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Instrument Sans", "Avenir Next", "Segoe UI", sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(circle at top left, rgba(16, 185, 129, 0.12), transparent 28%),
+      radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.12), transparent 24%),
+      linear-gradient(180deg, #eef4fb, #f8fafc);
+  }
+
+  h1, p { margin-top: 0; }
+  .shell { min-height: 100vh; display: grid; grid-template-columns: minmax(320px, 400px) minmax(0, 1fr); }
+  .list-panel { display: flex; flex-direction: column; gap: 1rem; height: 100vh; padding: 1.25rem; border-right: 1px solid var(--panel-border); background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(247, 250, 252, 0.84)), rgba(255, 255, 255, 0.72); backdrop-filter: blur(18px); overflow-y: auto; overscroll-behavior: contain; }
+  .list-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding-bottom: 0.25rem; position: sticky; top: -1.25rem; z-index: 3; margin: -1.25rem -1.25rem 0; padding: 1.25rem 1.25rem 0.5rem; background: linear-gradient(180deg, rgba(243, 246, 251, 0.98), rgba(243, 246, 251, 0.88) 72%, rgba(243, 246, 251, 0)); backdrop-filter: blur(10px); }
+  .pin-count { padding: 0.55rem 0.8rem; border-radius: 999px; background: var(--accent-soft); color: var(--accent-strong); font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
+  .eyebrow { margin: 0 0 0.35rem; text-transform: uppercase; letter-spacing: 0.16em; font-size: 0.72rem; color: var(--accent); }
+  h1 { margin: 0; font-size: clamp(1.8rem, 2vw, 2.35rem); line-height: 1; letter-spacing: -0.04em; }
+  h2 { margin: 0; font-size: 1rem; line-height: 1.2; }
+  .warning-box { padding: 0.9rem 1rem; border-radius: 18px; background: rgba(255, 248, 231, 0.95); border: 1px solid rgba(217, 119, 6, 0.18); color: #92400e; font-size: 0.92rem; }
+  .upload-panel { display: grid; gap: 0.55rem; padding: 0.85rem 0.95rem; border: 1px solid rgba(148, 163, 184, 0.12); border-radius: 20px; background: rgba(255, 255, 255, 0.58); }
+  .import-panel, .review-modal { display: grid; gap: 0.8rem; padding: 1rem; border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 20px; background: rgba(255, 255, 255, 0.84); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05); }
+  .upload-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .utility-actions { gap: 0.55rem; }
+  .import-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.75rem; }
+  .review-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+  .field-group { display: grid; gap: 0.35rem; }
+  .field-group span { font-size: 0.82rem; font-weight: 700; color: var(--muted); }
+  .field-group-wide { grid-column: 1 / -1; }
+  .text-input, .text-area { width: 100%; border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 14px; background: rgba(255, 255, 255, 0.96); color: var(--text); font: inherit; padding: 0.72rem 0.85rem; }
+  .text-input:focus, .text-area:focus { outline: 2px solid rgba(15, 118, 110, 0.18); border-color: rgba(15, 118, 110, 0.36); }
+  .text-area { resize: vertical; min-height: 5.75rem; }
+  .review-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .share-results { display: grid; gap: 0.75rem; padding: 0.85rem; border-radius: 18px; background: rgba(15, 118, 110, 0.06); border: 1px solid rgba(15, 118, 110, 0.12); }
+  .modal-backdrop { position: fixed; inset: 0; display: grid; place-items: center; padding: 1.25rem; background: rgba(15, 23, 42, 0.42); backdrop-filter: blur(8px); z-index: 30; }
+  .modal-backdrop[hidden], .review-modal[hidden], .import-panel[hidden], .utility-button[hidden] { display: none !important; }
+  .review-modal { width: min(720px, calc(100vw - 2.5rem)); max-height: min(760px, calc(100vh - 2.5rem)); overflow: auto; border-radius: 26px; background: rgba(255, 255, 255, 0.97); box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22); }
+  .primary-button, .secondary-button, .utility-button { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; padding: 0.7rem 1rem; border-radius: 14px; border: 1px solid rgba(15, 118, 110, 0.14); font: inherit; font-weight: 700; cursor: pointer; transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease; }
+  .primary-button { background: var(--accent); color: white; box-shadow: 0 10px 20px rgba(15, 118, 110, 0.18); }
+  .secondary-button { background: rgba(255, 255, 255, 0.92); color: var(--text); }
+  .utility-button { min-height: 2.35rem; padding: 0.55rem 0.8rem; border-radius: 12px; background: rgba(255, 255, 255, 0.72); color: var(--muted); border-color: rgba(148, 163, 184, 0.16); box-shadow: none; }
+  .primary-button:hover, .primary-button:focus-visible, .secondary-button:hover, .secondary-button:focus-visible, .utility-button:hover, .utility-button:focus-visible { transform: translateY(-1px); border-color: rgba(15, 118, 110, 0.32); outline: none; }
+  .hidden-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  .helper-text { margin: 0; color: var(--muted); font-size: 0.9rem; line-height: 1.45; }
+  .helper-text.is-error { color: #b91c1c; }
+  .helper-text-subtle { font-size: 0.84rem; color: #7c8aa0; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  .review-count { min-width: 2rem; padding: 0.2rem 0.55rem; border-radius: 999px; background: rgba(148, 163, 184, 0.16); color: #475569; font-size: 0.78rem; font-weight: 700; text-align: center; }
+  .warning-box ul { margin: 0.5rem 0 0; padding-left: 1.15rem; }
+  .location-list { display: grid; gap: 0.55rem; list-style: none; margin: 0; padding: 0; overflow: visible; }
+  :global(.location-button) { width: 100%; height: var(--list-card-height); min-height: var(--list-card-height); padding: 0; text-align: left; border: 1px solid rgba(148, 163, 184, 0.18); border-radius: var(--list-card-radius); background: rgba(255, 255, 255, 0.9); box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05); cursor: pointer; overflow: hidden; transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease; }
+  :global(.review-card) { display: grid; height: var(--list-card-height); min-height: var(--list-card-height); grid-template-columns: 4.75rem minmax(0, 1fr); border: 1px dashed rgba(148, 163, 184, 0.32); border-radius: var(--list-card-radius); background: rgba(255, 255, 255, 0.76); overflow: hidden; }
+  :global(.location-button:hover), :global(.location-button:focus-visible), :global(.location-button.is-active) { transform: translateY(-1px); border-color: rgba(15, 118, 110, 0.28); background: rgba(240, 253, 250, 0.96); box-shadow: 0 14px 30px rgba(15, 118, 110, 0.1); outline: none; }
+  :global(.location-row) { display: flex; align-items: flex-start; gap: 0.5rem; }
+  :global(.location-card-head) { display: grid; grid-template-columns: 4.75rem minmax(0, 1fr); gap: 0; align-items: stretch; min-height: 100%; }
+  :global(.location-copy) { display: grid; align-content: start; gap: 0.18rem; min-width: 0; min-height: 100%; padding: 0.75rem 0.85rem 0.75rem 0.8rem; }
+  :global(.location-thumb) { position: relative; width: 100%; height: 100%; display: grid; place-items: center; border-radius: 0; overflow: hidden; background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(226, 232, 240, 0.98)); border-right: 1px solid rgba(148, 163, 184, 0.12); flex-shrink: 0; }
+  :global(.location-thumb.is-fallback) { background: linear-gradient(180deg, rgba(240, 253, 250, 0.98), rgba(204, 251, 241, 0.98)); border-color: rgba(15, 118, 110, 0.14); }
+  :global(.location-thumb-image) { width: 100%; height: 100%; display: block; object-fit: cover; }
+  :global(.location-thumb-image[data-photo-error="true"]), .map :global(.popup-photo[data-photo-error="true"]) { display: none; }
+  :global(.location-thumb-fallback) { position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.55rem; line-height: 1; opacity: 0; }
+  :global(.location-thumb.is-fallback .location-thumb-fallback), :global(.location-thumb.has-photo .location-thumb-image[data-photo-error="true"] + .location-thumb-fallback) { opacity: 1; }
+  :global(.location-title), :global(.location-meta), .empty-state { display: block; }
+  :global(.location-title) { font-weight: 700; color: var(--text); line-height: 1.28; font-size: 0.96rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  :global(.location-meta), :global(.location-description), .empty-state { color: var(--muted); }
+  :global(.location-meta) { text-transform: capitalize; font-size: 0.8rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .review-panel { display: grid; gap: 0.8rem; }
+  .review-list { overflow: visible; }
+  :global(.review-card > .location-thumb) { grid-row: 1 / -1; }
+  :global(.review-card > .location-copy) { padding-bottom: 0.3rem; }
+  :global(.review-badge) { width: fit-content; padding: 0.22rem 0.5rem; border-radius: 999px; background: rgba(217, 119, 6, 0.12); color: #92400e; font-size: 0.72rem; font-weight: 700; }
+  :global(.review-card-footer) { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-width: 0; padding: 0 0.85rem 0.7rem 0.8rem; }
+  :global(.review-link) { width: fit-content; color: var(--accent-strong); font-size: 0.76rem; font-weight: 700; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  :global(.review-link:hover), :global(.review-link:focus-visible) { text-decoration: underline; outline: none; }
+  :global(.location-description) { font-size: 0.94rem; line-height: 1.45; margin: 0; }
+  :global(.review-card .location-title) { -webkit-line-clamp: 1; }
+  :global(.review-card .location-meta) { -webkit-line-clamp: 1; }
+  .map :global(.leaflet-popup-content-wrapper) { border-radius: 22px; background: rgba(255, 255, 255, 0.96); box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16); overflow: hidden; }
+  .map :global(.leaflet-popup-content) { margin: 0; min-width: min(280px, calc(100vw - 72px)); max-width: 320px; overflow: hidden; color: var(--text); }
+  .map :global(.leaflet-popup-tip) { background: rgba(255, 255, 255, 0.96); }
+  .map :global(.leaflet-popup-close-button) { top: 0; right: 0; width: 2.75rem; height: 2.75rem; padding: 0; border-radius: 0 22px 0 18px; background: #ffffff; color: #0f172a; display: grid; place-items: center; font-size: 1.2rem; line-height: 1; }
+  .map :global(.leaflet-popup-close-button:hover), .map :global(.leaflet-popup-close-button:focus-visible) { background: #f8fafc; color: #020617; outline: none; }
+  .map :global(.popup-title), .map :global(.popup-type), .map :global(.popup-description), .map :global(.popup-link) { display: block; padding-left: 1rem; padding-right: 1rem; }
+  .map :global(.popup-title) { padding-top: 1rem; font-size: 1.02rem; line-height: 1.3; }
+  .map :global(.popup-type) { margin-top: 0.35rem; color: var(--accent-strong); font-size: 0.82rem; font-weight: 700; text-transform: capitalize; }
+  .map :global(.popup-description), .map :global(.popup-link) { margin: 0.7rem 0 0; color: var(--muted); line-height: 1.5; font-size: 0.92rem; }
+  .map :global(.popup-link:last-child), .map :global(.popup-description:last-child) { padding-bottom: 1rem; }
+  .map :global(.leaflet-popup-content a) { color: var(--accent-strong); font-weight: 700; text-decoration: none; }
+  .map :global(.leaflet-popup-content a:hover), .map :global(.leaflet-popup-content a:focus-visible) { text-decoration: underline; outline: none; }
+  .map :global(.popup-media) { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: linear-gradient(180deg, rgba(226, 232, 240, 0.8), rgba(203, 213, 225, 0.8)); }
+  .map :global(.popup-media.is-fallback) { background: linear-gradient(180deg, rgba(240, 253, 250, 0.98), rgba(204, 251, 241, 0.98)); }
+  .map :global(.popup-photo) { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .map :global(.popup-photo-fallback) { position: absolute; inset: 0; display: grid; place-items: center; font-size: 2rem; line-height: 1; opacity: 0; }
+  .map :global(.popup-media.is-fallback .popup-photo-fallback), .map :global(.popup-photo[data-photo-error="true"] + .popup-photo-fallback) { opacity: 1; }
+  .map-panel { position: relative; min-height: 100vh; padding: 0; }
+  .map { height: 100%; min-height: 100vh; width: 100%; }
+  .map :global(.leaflet-control-zoom), .map :global(.leaflet-control-attribution) { background: var(--panel); backdrop-filter: blur(18px); border: 1px solid var(--panel-border); box-shadow: var(--shadow); }
+  .map :global(.leaflet-control-zoom) { border-radius: 18px; overflow: hidden; }
+  .map :global(.leaflet-control-attribution) { border-radius: 14px 0 0; padding: 0.2rem 0.45rem; }
+  .map :global(.emoji-pin-wrapper) { position: relative; width: 48px; height: 62px; background: transparent; border: 0; }
+  .map :global(.emoji-pin-shadow) { position: absolute; left: 50%; bottom: 6px; width: 20px; height: 8px; border-radius: 999px; background: rgba(15, 23, 42, 0.18); transform: translateX(-50%); filter: blur(3px); }
+  .map :global(.emoji-pin) { position: absolute; inset: 0 auto auto 50%; width: 48px; height: 48px; transform: translateX(-50%); display: grid; place-items: center; }
+  .map :global(.emoji-pin)::before { content: ""; position: absolute; inset: 0; border-radius: 18px 18px 18px 4px; background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(237, 255, 251, 0.98)); border: 1px solid rgba(15, 118, 110, 0.18); box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12), 0 3px 10px rgba(15, 118, 110, 0.12); transform: rotate(-45deg); transform-origin: center; z-index: 0; }
+  .map :global(.emoji-pin-glyph) { font-size: 1.15rem; line-height: 1; position: relative; z-index: 1; transform: rotate(45deg) translateY(-1px); }
+  .map :global(.leaflet-marker-icon:hover .emoji-pin), .map :global(.leaflet-marker-icon:focus .emoji-pin) { transform: translateX(-50%) translateY(-2px); }
+  .map-empty { display: grid; place-items: center; padding: 2rem; text-align: center; color: var(--muted); }
+  @media (max-width: 900px) {
+    :root { --list-card-height: 88px; }
+    .shell { grid-template-columns: 1fr; }
+    .list-panel { min-height: 42vh; max-height: 42vh; border-right: 0; border-bottom: 1px solid var(--panel-border); }
+    .map-panel, .map { min-height: 58vh; height: 58vh; }
+    .import-form, .review-form { grid-template-columns: 1fr; }
+    .location-list { padding-bottom: 0.25rem; }
+    .map :global(.leaflet-popup-content) { min-width: min(260px, calc(100vw - 56px)); max-width: min(300px, calc(100vw - 56px)); }
+  }
+</style>
