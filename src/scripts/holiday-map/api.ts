@@ -1,5 +1,4 @@
 import type {
-  ApiErrorResponse,
   CreateSharedMapRequest,
   CreateSharedMapResponse,
   FetchSharedMapResponse,
@@ -35,8 +34,11 @@ function assertImportedLocationDraft(payload: unknown): ImportLinkResponse {
     || typeof payload.description !== "string"
     || typeof payload.link !== "string"
     || typeof payload.photo !== "string"
-    || typeof payload.status !== "string"
+    || (payload.status !== "complete" && payload.status !== "pending")
     || !Array.isArray(payload.notes)
+    || !payload.notes.every((note) => typeof note === "string")
+    || !(payload.latitude === undefined || typeof payload.latitude === "number")
+    || !(payload.longitude === undefined || typeof payload.longitude === "number")
   ) {
     throw new Error("Import response was invalid.");
   }

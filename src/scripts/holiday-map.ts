@@ -140,7 +140,6 @@ if (elements) {
     reviewPhotoElement,
     shareMapFormElement,
     shareMapNameElement,
-    shareButtonElement: _shareButtonElement,
     updateSharedMapButtonElement,
     uploadLabelElement,
   } = elements;

@@ -23,7 +23,6 @@ type ShareModalControllerOptions = {
 const defaultShareStatus = "Create a public read link plus a private edit link for this map.";
 
 export function createShareModalController({ elements }: ShareModalControllerOptions) {
-  let state: ShareModalState = "idle";
   let returnFocusElement: HTMLElement | undefined;
   const submitLabel = elements.submitElement.textContent?.trim() || "Create share link";
 
@@ -42,7 +41,6 @@ export function createShareModalController({ elements }: ShareModalControllerOpt
   };
 
   const renderState = (nextState: ShareModalState) => {
-    state = nextState;
     const isSubmitting = nextState === "submitting";
     const isCreated = nextState === "created";
 
