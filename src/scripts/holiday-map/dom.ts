@@ -29,7 +29,6 @@ export type HolidayMapElements = {
   mobileShareButtonElement: HTMLButtonElement;
   mobileUpdateSharedMapButtonElement: HTMLButtonElement;
   mobileClearButtonElement: HTMLButtonElement;
-  mobileListSheetElement: HTMLElement;
   mobileListToggleElement: HTMLButtonElement;
   mobileDetailBackdropElement: HTMLElement;
   mobileDetailPanelElement: HTMLElement;
@@ -114,7 +113,6 @@ export function getHolidayMapElements(): HolidayMapElements | undefined {
   const mobileShareButtonElement = getElementById("mobile-share-map", HTMLButtonElement);
   const mobileUpdateSharedMapButtonElement = getElementById("mobile-update-shared-map", HTMLButtonElement);
   const mobileClearButtonElement = getElementById("mobile-clear-csv", HTMLButtonElement);
-  const mobileListSheetElement = getElementById("mobile-list-sheet", HTMLElement);
   const mobileListToggleElement = getElementById("mobile-list-toggle", HTMLButtonElement);
   const mobileDetailBackdropElement = getElementById("mobile-detail-backdrop", HTMLElement);
   const mobileDetailPanelElement = getElementById("mobile-detail-panel", HTMLElement);
@@ -188,7 +186,6 @@ export function getHolidayMapElements(): HolidayMapElements | undefined {
     || !mobileShareButtonElement
     || !mobileUpdateSharedMapButtonElement
     || !mobileClearButtonElement
-    || !mobileListSheetElement
     || !mobileListToggleElement
     || !mobileDetailBackdropElement
     || !mobileDetailPanelElement
@@ -265,7 +262,6 @@ export function getHolidayMapElements(): HolidayMapElements | undefined {
     mobileShareButtonElement,
     mobileUpdateSharedMapButtonElement,
     mobileClearButtonElement,
-    mobileListSheetElement,
     mobileListToggleElement,
     mobileDetailBackdropElement,
     mobileDetailPanelElement,

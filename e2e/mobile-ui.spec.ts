@@ -20,10 +20,14 @@ test.describe("mobile map UI", () => {
       ].join("\n")),
     });
 
-    await expect(page.locator("#mobile-list-toggle")).toContainText("1 pin");
+    const mobileListToggle = page.locator("#mobile-list-toggle");
+
+    await expect(mobileListToggle).toContainText("1 pin");
+    await expect(mobileListToggle).toBeVisible();
+    await expect(mobileListToggle).toBeEnabled();
     await expect(page.locator(".list-panel")).not.toHaveClass(/is-mobile-expanded/);
 
-    await page.locator("#mobile-list-toggle").click({ force: true });
+    await mobileListToggle.click();
     await expect(page.locator(".list-panel")).toHaveClass(/is-mobile-expanded/);
 
     await page.locator("#mapped-list [data-location-index='0']").click();
@@ -48,5 +52,40 @@ test.describe("mobile map UI", () => {
     await expect(page.locator("#mobile-add-link")).toBeVisible();
     await expect(page.locator("#mobile-download-csv")).toBeVisible();
     await expect(page.locator("#mobile-clear-csv")).toBeVisible();
+  });
+
+  test("keeps download available in read-only shared mobile view", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+    });
+
+    await page.route("**/api/share-map/share-123", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          name: "Shared Trip",
+          shareId: "share-123",
+          lastChangedAt: "2026-04-10T00:00:00.000Z",
+          csvText: [
+            "title,type,description,latitude,longitude,link,photo",
+            "Shared Airport,airport,Main arrival point,47.45,8.56,https://example.com/airport,",
+          ].join("\n"),
+          canEdit: false,
+        }),
+      });
+    });
+
+    await page.goto("/map/share-123");
+
+    await expect(page.locator("#mobile-actions-toggle")).toBeVisible();
+    await page.locator("#mobile-actions-toggle").click();
+
+    await expect(page.locator("#mobile-download-csv")).toBeVisible();
+    await expect(page.locator("#mobile-download-csv")).toBeEnabled();
+    await expect(page.locator("#mobile-upload-csv")).toBeHidden();
+    await expect(page.locator("#mobile-add-link")).toBeHidden();
+    await expect(page.locator("#mobile-clear-csv")).toBeHidden();
   });
 });

@@ -144,7 +144,6 @@ if (elements) {
     mobileShareButtonElement,
     mobileUpdateSharedMapButtonElement,
     mobileClearButtonElement,
-    mobileListSheetElement,
     mobileListToggleElement,
     mobileDetailBackdropElement,
     mobileDetailPanelElement,
@@ -188,8 +187,6 @@ if (elements) {
   let currentCsvText = "";
   let currentSharedMapName: string | null = null;
   let canEditSharedMap = false;
-  let currentLocations: LocationPin[] = [];
-
   const mobileViewportQuery = window.matchMedia("(max-width: 900px)");
 
   const isMobileViewport = () => mobileViewportQuery.matches;
@@ -347,8 +344,6 @@ if (elements) {
     const isReadOnlySharedView = sharedView.isSharedView && !canEditSharedMap;
     const isEditableSharedView = sharedView.isSharedView && canEditSharedMap;
     const hideShareCreation = sharedView.isSharedView;
-    const hideReadOnlyActions = sharedView.isSharedView && !isEditableSharedView;
-
     importPanelElement.hidden = isReadOnlySharedView;
     uploadLabelElement.hidden = isReadOnlySharedView;
     uploadInputElement.hidden = isReadOnlySharedView;
@@ -358,7 +353,7 @@ if (elements) {
     mobileClearButtonElement.hidden = isReadOnlySharedView;
     mobileShareButtonElement.hidden = hideShareCreation;
     mobileUpdateSharedMapButtonElement.hidden = !isEditableSharedView;
-    mobileActionsToggleElement.hidden = hideReadOnlyActions;
+    mobileActionsToggleElement.hidden = false;
     mobileUploadButtonElement.hidden = isReadOnlySharedView;
   };
 
@@ -571,7 +566,6 @@ if (elements) {
   const renderParsedCsv = (csvText: string, statusMessage: string) => {
     const { locations, pendingLocations, warnings } = parseLocationsCsv(csvText);
 
-    currentLocations = locations;
     currentCsvText = csvText;
     pinCountElement.textContent = `${locations.length} ${locations.length === 1 ? "pin" : "pins"}`;
     mobilePinCountElement.textContent = pinCountElement.textContent;
@@ -600,7 +594,6 @@ if (elements) {
 
   const clearRenderedState = () => {
     destroyMap();
-    currentLocations = [];
     currentCsvText = "";
     currentSharedMapName = null;
     mappedListElement.innerHTML = "";
