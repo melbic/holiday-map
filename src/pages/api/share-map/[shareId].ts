@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 
+import type { UpdateSharedMapRequest } from "../../../lib/api-contracts.ts";
 import {
   ShareMapAuthError,
   ShareMapNotFoundError,
@@ -23,6 +24,22 @@ function json(body: unknown, init?: ResponseInit): Response {
 function getShareId(params: Record<string, string | undefined>) {
   const shareId = params.shareId;
   return typeof shareId === "string" && shareId !== "" ? shareId : undefined;
+}
+
+function parseUpdateSharedMapRequest(payload: unknown): UpdateSharedMapRequest | undefined {
+  if (typeof payload !== "object" || payload === null) {
+    return undefined;
+  }
+
+  const name = "name" in payload && typeof payload.name === "string" ? payload.name : undefined;
+  const csvText = "csvText" in payload && typeof payload.csvText === "string" ? payload.csvText : undefined;
+  const editSecret = "editSecret" in payload && typeof payload.editSecret === "string" ? payload.editSecret : undefined;
+
+  if (!csvText || csvText.trim() === "" || !editSecret || editSecret.trim() === "") {
+    return undefined;
+  }
+
+  return { name, csvText, editSecret };
 }
 
 export const GET: APIRoute = async ({ params, url }) => {
@@ -61,24 +78,14 @@ export const PUT: APIRoute = async ({ params, request }) => {
     return json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const name = payload && typeof payload === "object" ? Reflect.get(payload, "name") : undefined;
-  const csvText = payload && typeof payload === "object" ? Reflect.get(payload, "csvText") : undefined;
-  const editSecret = payload && typeof payload === "object" ? Reflect.get(payload, "editSecret") : undefined;
+  const parsed = parseUpdateSharedMapRequest(payload);
 
-  if (typeof csvText !== "string" || csvText.trim() === "") {
-    return json({ error: "csvText is required." }, { status: 400 });
-  }
-
-  if (typeof editSecret !== "string" || editSecret.trim() === "") {
-    return json({ error: "editSecret is required." }, { status: 400 });
+  if (!parsed) {
+    return json({ error: "csvText and editSecret are required." }, { status: 400 });
   }
 
   try {
-    const updated = await updateSharedMap(shareId, {
-      name: typeof name === "string" ? name : undefined,
-      csvText,
-      editSecret,
-    });
+    const updated = await updateSharedMap(shareId, parsed);
 
     return json(updated, { status: 200 });
   } catch (error) {

@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 
+import type { CreateSharedMapRequest } from "../../lib/api-contracts.ts";
 import { ShareMapValidationError, createSharedMap } from "../../lib/shared-maps.ts";
 
 export const prerender = false;
@@ -58,6 +59,21 @@ function consumeShareMapRateLimit(request: Request) {
   return { limited: false, retryAfterSeconds: 0 };
 }
 
+function parseCreateSharedMapRequest(payload: unknown): CreateSharedMapRequest | undefined {
+  if (typeof payload !== "object" || payload === null) {
+    return undefined;
+  }
+
+  const name = "name" in payload && typeof payload.name === "string" ? payload.name : undefined;
+  const csvText = "csvText" in payload && typeof payload.csvText === "string" ? payload.csvText : undefined;
+
+  if (!csvText || csvText.trim() === "") {
+    return undefined;
+  }
+
+  return { name, csvText };
+}
+
 export const POST: APIRoute = async ({ request, site }) => {
   const rateLimit = consumeShareMapRateLimit(request);
 
@@ -81,18 +97,14 @@ export const POST: APIRoute = async ({ request, site }) => {
     return json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const name = payload && typeof payload === "object" ? Reflect.get(payload, "name") : undefined;
-  const csvText = payload && typeof payload === "object" ? Reflect.get(payload, "csvText") : undefined;
+  const parsed = parseCreateSharedMapRequest(payload);
 
-  if (typeof csvText !== "string" || csvText.trim() === "") {
+  if (!parsed) {
     return json({ error: "csvText is required." }, { status: 400 });
   }
 
   try {
-    const created = await createSharedMap({
-      name: typeof name === "string" ? name : undefined,
-      csvText,
-    });
+    const created = await createSharedMap(parsed);
 
     const configuredSite = site?.toString().replace(/\/$/, "");
     const origin = !configuredSite || configuredSite === "https://example.com"

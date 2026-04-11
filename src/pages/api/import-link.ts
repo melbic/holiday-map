@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 
+import type { ImportLinkRequest } from "../../lib/api-contracts.ts";
 import { createImportDependencies, importUrl } from "../../lib/link-importer.ts";
 
 export const prerender = false;
@@ -27,6 +28,20 @@ function json(body: unknown, init?: ResponseInit): Response {
   });
 }
 
+function parseImportLinkRequest(payload: unknown): ImportLinkRequest | undefined {
+  if (typeof payload !== "object" || payload === null) {
+    return undefined;
+  }
+
+  const url = "url" in payload && typeof payload.url === "string" ? payload.url : undefined;
+
+  if (!isHttpUrl(url)) {
+    return undefined;
+  }
+
+  return { url };
+}
+
 export const POST: APIRoute = async ({ request }) => {
   let payload: unknown;
 
@@ -36,14 +51,14 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const url = payload && typeof payload === "object" ? Reflect.get(payload, "url") : undefined;
+  const parsed = parseImportLinkRequest(payload);
 
-  if (!isHttpUrl(url)) {
+  if (!parsed) {
     return json({ error: "A valid http or https URL is required." }, { status: 400 });
   }
 
   try {
-    const imported = await importUrl(url, createImportDependencies());
+    const imported = await importUrl(parsed.url, createImportDependencies());
     return json(imported, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Import failed.";
