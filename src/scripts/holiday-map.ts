@@ -106,6 +106,14 @@ const createReviewDraft = (row: ImportedLocationDraft): EditableImportedLocation
   notes: [...row.notes],
 });
 
+type MobileDetailLocation = {
+  title: string;
+  type: string;
+  description: string;
+  link?: string;
+  photo?: string;
+};
+
 if (elements) {
   const {
     appShellElement,
@@ -118,12 +126,35 @@ if (elements) {
     importPanelElement,
     emptyStateElement,
     pinCountElement,
+    mobilePinCountElement,
     reviewCountElement,
+    mobileListCountElement,
     storageStatusElement,
     uploadInputElement,
     downloadButtonElement,
     shareButtonElement,
     clearButtonElement,
+    mobileActionsToggleElement,
+    mobileActionsBackdropElement,
+    mobileActionsPanelElement,
+    mobileActionsCloseElement,
+    mobileUploadButtonElement,
+    mobileAddLinkElement,
+    mobileDownloadButtonElement,
+    mobileShareButtonElement,
+    mobileUpdateSharedMapButtonElement,
+    mobileClearButtonElement,
+    mobileListToggleElement,
+    mobileDetailBackdropElement,
+    mobileDetailPanelElement,
+    mobileDetailCloseElement,
+    mobileDetailTitleElement,
+    mobileDetailMediaElement,
+    mobileDetailPhotoElement,
+    mobileDetailFallbackElement,
+    mobileDetailTypeElement,
+    mobileDetailDescriptionElement,
+    mobileDetailLinkElement,
     listPanelElement,
     linkImportFormElement,
     linkImportUrlElement,
@@ -156,6 +187,91 @@ if (elements) {
   let currentCsvText = "";
   let currentSharedMapName: string | null = null;
   let canEditSharedMap = false;
+  const mobileViewportQuery = window.matchMedia("(max-width: 900px)");
+
+  const isMobileViewport = () => mobileViewportQuery.matches;
+
+  const setMobileListExpanded = (expanded: boolean) => {
+    listPanelElement.classList.toggle("is-mobile-expanded", expanded);
+    mobileListToggleElement.setAttribute("aria-expanded", expanded ? "true" : "false");
+  };
+
+  const closeMobileActionsPanel = () => {
+    mobileActionsBackdropElement.hidden = true;
+    mobileActionsPanelElement.hidden = true;
+    document.body.style.overflow = isMobileViewport() ? "hidden" : "";
+  };
+
+  const openMobileActionsPanel = () => {
+    mobileActionsBackdropElement.hidden = false;
+    mobileActionsPanelElement.hidden = false;
+    document.body.style.overflow = "hidden";
+  };
+
+  const closeMobileDetailPanel = () => {
+    mobileDetailBackdropElement.hidden = true;
+    mobileDetailPanelElement.hidden = true;
+    document.body.style.overflow = isMobileViewport() ? "hidden" : "";
+  };
+
+  const openMobileDetailPanel = (location: MobileDetailLocation) => {
+    const safePhoto = location.photo ? sanitizeExternalUrl(location.photo) : undefined;
+    const safeLink = location.link ? sanitizeExternalUrl(location.link) : undefined;
+
+    mobileDetailTitleElement.textContent = location.title;
+    mobileDetailTypeElement.textContent = location.type;
+    mobileDetailDescriptionElement.textContent = location.description || "No description yet.";
+    mobileDetailFallbackElement.textContent = emojiForType(location.type);
+    mobileDetailMediaElement.classList.toggle("is-fallback", !safePhoto);
+    mobileDetailPhotoElement.hidden = !safePhoto;
+    mobileDetailPhotoElement.removeAttribute(photoLoadErrorAttribute);
+
+    if (safePhoto) {
+      mobileDetailPhotoElement.src = safePhoto;
+      mobileDetailPhotoElement.alt = location.title;
+    } else {
+      mobileDetailPhotoElement.removeAttribute("src");
+      mobileDetailPhotoElement.alt = "";
+    }
+
+    mobileDetailLinkElement.hidden = !safeLink;
+
+    if (safeLink) {
+      mobileDetailLinkElement.href = safeLink;
+    } else {
+      mobileDetailLinkElement.removeAttribute("href");
+    }
+
+    bindPhotoFallbacks(mobileDetailPanelElement);
+    mobileDetailBackdropElement.hidden = false;
+    mobileDetailPanelElement.hidden = false;
+    document.body.style.overflow = "hidden";
+  };
+
+  const showLocationDetails = (location: LocationPin, index: number) => {
+    if (!map) {
+      return;
+    }
+
+    const marker = markers[index];
+
+    if (!marker) {
+      return;
+    }
+
+    setActiveLocation(index);
+    const latLng = marker.getLatLng();
+    map.setView(latLng, Math.max(map.getZoom(), isMobileViewport() ? 10 : 11), { animate: true });
+
+    if (isMobileViewport()) {
+      setMobileListExpanded(false);
+      openMobileDetailPanel(location);
+      marker.closePopup();
+      return;
+    }
+
+    marker.openPopup();
+  };
 
   const reviewModal = createReviewModalController({
     elements: {
@@ -227,12 +343,18 @@ if (elements) {
   const syncSharedViewControls = () => {
     const isReadOnlySharedView = sharedView.isSharedView && !canEditSharedMap;
     const isEditableSharedView = sharedView.isSharedView && canEditSharedMap;
-
+    const hideShareCreation = sharedView.isSharedView;
     importPanelElement.hidden = isReadOnlySharedView;
     uploadLabelElement.hidden = isReadOnlySharedView;
     uploadInputElement.hidden = isReadOnlySharedView;
     clearButtonElement.hidden = isReadOnlySharedView;
     updateSharedMapButtonElement.hidden = !isEditableSharedView;
+    mobileAddLinkElement.hidden = isReadOnlySharedView;
+    mobileClearButtonElement.hidden = isReadOnlySharedView;
+    mobileShareButtonElement.hidden = hideShareCreation;
+    mobileUpdateSharedMapButtonElement.hidden = !isEditableSharedView;
+    mobileActionsToggleElement.hidden = false;
+    mobileUploadButtonElement.hidden = isReadOnlySharedView;
   };
 
   const updateCsvUtilityState = () => {
@@ -240,6 +362,9 @@ if (elements) {
     downloadButtonElement.disabled = sharedView.isSharedView ? false : !hasCsv;
     shareButtonElement.disabled = sharedView.isSharedView || !hasShareableCsv(getStoredCsvText() ?? "");
     updateSharedMapButtonElement.disabled = !canEditSharedMap || !hasShareableCsv(currentCsvText);
+    mobileDownloadButtonElement.disabled = downloadButtonElement.disabled;
+    mobileShareButtonElement.disabled = shareButtonElement.disabled;
+    mobileUpdateSharedMapButtonElement.disabled = updateSharedMapButtonElement.disabled;
   };
 
   const preventMapScrollFrom = (element: HTMLElement | null) => {
@@ -401,6 +526,11 @@ if (elements) {
 
       marker.on("click", () => {
         setActiveLocation(index);
+
+        if (isMobileViewport()) {
+          openMobileDetailPanel(location);
+          marker.closePopup();
+        }
       });
 
       return marker;
@@ -420,16 +550,13 @@ if (elements) {
     activeLocationButtons.forEach((button) => {
       button.addEventListener("click", () => {
         const index = Number(button.dataset.locationIndex);
-        const marker = markers[index];
+        const location = locations[index];
 
-        if (!marker || !map) {
+        if (!location) {
           return;
         }
 
-        setActiveLocation(index);
-        const latLng = marker.getLatLng();
-        map.setView(latLng, Math.max(map.getZoom(), 11), { animate: true });
-        marker.openPopup();
+        showLocationDetails(location, index);
       });
     });
 
@@ -441,6 +568,8 @@ if (elements) {
 
     currentCsvText = csvText;
     pinCountElement.textContent = `${locations.length} ${locations.length === 1 ? "pin" : "pins"}`;
+    mobilePinCountElement.textContent = pinCountElement.textContent;
+    mobileListCountElement.textContent = pinCountElement.textContent;
     renderWarnings(warnings);
     renderMappedList(locations);
     renderPendingList(pendingLocations);
@@ -475,8 +604,11 @@ if (elements) {
     reviewPanelElement.hidden = true;
     reviewCountElement.textContent = "0";
     pinCountElement.textContent = "0 pins";
+    mobilePinCountElement.textContent = "0 pins";
+    mobileListCountElement.textContent = "0 pins";
     emptyStateElement.hidden = false;
     activeLocationButtons = [];
+    closeMobileDetailPanel();
     renderMap([]);
     updateCsvUtilityState();
   };
@@ -622,6 +754,11 @@ if (elements) {
     setStatusMessage("Downloaded the current CSV.");
   });
 
+  mobileDownloadButtonElement.addEventListener("click", () => {
+    closeMobileActionsPanel();
+    downloadButtonElement.click();
+  });
+
   shareButtonElement.addEventListener("click", () => {
     if (shareButtonElement.disabled || sharedView.isSharedView) {
       return;
@@ -629,6 +766,13 @@ if (elements) {
 
     const triggerElement = document.activeElement instanceof HTMLElement ? document.activeElement : shareButtonElement;
     shareModal.open(triggerElement);
+  });
+
+  mobileShareButtonElement.addEventListener("click", () => {
+    closeMobileActionsPanel();
+    if (!mobileShareButtonElement.disabled) {
+      shareButtonElement.click();
+    }
   });
 
   linkImportFormElement.addEventListener("submit", async (event) => {
@@ -670,6 +814,57 @@ if (elements) {
     setImportStatusMessage("Cancelled review.");
   });
 
+  mobileAddLinkElement.addEventListener("click", () => {
+    closeMobileActionsPanel();
+    setMobileListExpanded(true);
+    linkImportUrlElement.focus();
+  });
+
+  mobileUploadButtonElement.addEventListener("click", () => {
+    closeMobileActionsPanel();
+    uploadLabelElement.click();
+  });
+
+  mobileActionsToggleElement.addEventListener("click", () => {
+    openMobileActionsPanel();
+  });
+
+  mobileActionsCloseElement.addEventListener("click", () => {
+    closeMobileActionsPanel();
+  });
+
+  mobileActionsBackdropElement.addEventListener("click", (event) => {
+    if (event.target === mobileActionsBackdropElement) {
+      closeMobileActionsPanel();
+    }
+  });
+
+  mobileListToggleElement.addEventListener("click", () => {
+    setMobileListExpanded(!listPanelElement.classList.contains("is-mobile-expanded"));
+  });
+
+  mobileDetailCloseElement.addEventListener("click", () => {
+    closeMobileDetailPanel();
+  });
+
+  mobileDetailBackdropElement.addEventListener("click", (event) => {
+    if (event.target === mobileDetailBackdropElement) {
+      closeMobileDetailPanel();
+    }
+  });
+
+  mobileClearButtonElement.addEventListener("click", () => {
+    closeMobileActionsPanel();
+    clearButtonElement.click();
+  });
+
+  mobileUpdateSharedMapButtonElement.addEventListener("click", () => {
+    closeMobileActionsPanel();
+    if (!mobileUpdateSharedMapButtonElement.disabled) {
+      updateSharedMapButtonElement.click();
+    }
+  });
+
   elements.shareMapCloseElement.addEventListener("click", () => {
     shareModal.close();
     setStatusMessage("Closed share dialog.");
@@ -695,6 +890,18 @@ if (elements) {
       event.preventDefault();
       shareModal.close();
       setStatusMessage("Closed share dialog.");
+      return;
+    }
+
+    if (event.key === "Escape" && !mobileActionsPanelElement.hidden) {
+      event.preventDefault();
+      closeMobileActionsPanel();
+      return;
+    }
+
+    if (event.key === "Escape" && !mobileDetailPanelElement.hidden) {
+      event.preventDefault();
+      closeMobileDetailPanel();
     }
   });
 
@@ -749,6 +956,7 @@ if (elements) {
   });
 
   syncSharedViewControls();
+  setMobileListExpanded(false);
 
   restoreSharedCsv().then((handled) => {
     if (!handled) {

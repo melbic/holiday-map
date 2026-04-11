@@ -11,12 +11,35 @@ export type HolidayMapElements = {
   importPanelElement: HTMLElement;
   emptyStateElement: HTMLElement;
   pinCountElement: HTMLElement;
+  mobilePinCountElement: HTMLElement;
   reviewCountElement: HTMLElement;
+  mobileListCountElement: HTMLElement;
   storageStatusElement: HTMLElement;
   uploadInputElement: HTMLInputElement;
   downloadButtonElement: HTMLButtonElement;
   shareButtonElement: HTMLButtonElement;
   clearButtonElement: HTMLButtonElement;
+  mobileActionsToggleElement: HTMLButtonElement;
+  mobileActionsBackdropElement: HTMLElement;
+  mobileActionsPanelElement: HTMLElement;
+  mobileActionsCloseElement: HTMLButtonElement;
+  mobileUploadButtonElement: HTMLButtonElement;
+  mobileAddLinkElement: HTMLButtonElement;
+  mobileDownloadButtonElement: HTMLButtonElement;
+  mobileShareButtonElement: HTMLButtonElement;
+  mobileUpdateSharedMapButtonElement: HTMLButtonElement;
+  mobileClearButtonElement: HTMLButtonElement;
+  mobileListToggleElement: HTMLButtonElement;
+  mobileDetailBackdropElement: HTMLElement;
+  mobileDetailPanelElement: HTMLElement;
+  mobileDetailCloseElement: HTMLButtonElement;
+  mobileDetailTitleElement: HTMLElement;
+  mobileDetailMediaElement: HTMLElement;
+  mobileDetailPhotoElement: HTMLImageElement;
+  mobileDetailFallbackElement: HTMLElement;
+  mobileDetailTypeElement: HTMLElement;
+  mobileDetailDescriptionElement: HTMLElement;
+  mobileDetailLinkElement: HTMLAnchorElement;
   listPanelElement: HTMLElement;
   linkImportFormElement: HTMLFormElement;
   linkImportUrlElement: HTMLInputElement;
@@ -72,12 +95,35 @@ export function getHolidayMapElements(): HolidayMapElements | undefined {
   const importPanelElement = queryElement(".import-panel", HTMLElement);
   const emptyStateElement = getElementById("list-empty-state", HTMLElement);
   const pinCountElement = getElementById("pin-count", HTMLElement);
+  const mobilePinCountElement = getElementById("mobile-pin-count", HTMLElement);
   const reviewCountElement = getElementById("review-count", HTMLElement);
+  const mobileListCountElement = getElementById("mobile-list-count", HTMLElement);
   const storageStatusElement = getElementById("storage-status", HTMLElement);
   const uploadInputElement = getElementById("csv-upload", HTMLInputElement);
   const downloadButtonElement = getElementById("download-csv", HTMLButtonElement);
   const shareButtonElement = getElementById("share-map", HTMLButtonElement);
   const clearButtonElement = getElementById("clear-csv", HTMLButtonElement);
+  const mobileActionsToggleElement = getElementById("mobile-actions-toggle", HTMLButtonElement);
+  const mobileActionsBackdropElement = getElementById("mobile-actions-backdrop", HTMLElement);
+  const mobileActionsPanelElement = getElementById("mobile-actions-panel", HTMLElement);
+  const mobileActionsCloseElement = getElementById("mobile-actions-close", HTMLButtonElement);
+  const mobileUploadButtonElement = getElementById("mobile-upload-csv", HTMLButtonElement);
+  const mobileAddLinkElement = getElementById("mobile-add-link", HTMLButtonElement);
+  const mobileDownloadButtonElement = getElementById("mobile-download-csv", HTMLButtonElement);
+  const mobileShareButtonElement = getElementById("mobile-share-map", HTMLButtonElement);
+  const mobileUpdateSharedMapButtonElement = getElementById("mobile-update-shared-map", HTMLButtonElement);
+  const mobileClearButtonElement = getElementById("mobile-clear-csv", HTMLButtonElement);
+  const mobileListToggleElement = getElementById("mobile-list-toggle", HTMLButtonElement);
+  const mobileDetailBackdropElement = getElementById("mobile-detail-backdrop", HTMLElement);
+  const mobileDetailPanelElement = getElementById("mobile-detail-panel", HTMLElement);
+  const mobileDetailCloseElement = getElementById("mobile-detail-close", HTMLButtonElement);
+  const mobileDetailTitleElement = getElementById("mobile-detail-title", HTMLElement);
+  const mobileDetailMediaElement = getElementById("mobile-detail-media", HTMLElement);
+  const mobileDetailPhotoElement = getElementById("mobile-detail-photo", HTMLImageElement);
+  const mobileDetailFallbackElement = getElementById("mobile-detail-fallback", HTMLElement);
+  const mobileDetailTypeElement = getElementById("mobile-detail-type", HTMLElement);
+  const mobileDetailDescriptionElement = getElementById("mobile-detail-description", HTMLElement);
+  const mobileDetailLinkElement = getElementById("mobile-detail-link", HTMLAnchorElement);
   const listPanelElement = queryElement(".list-panel", HTMLElement);
   const linkImportFormElement = getElementById("link-import-form", HTMLFormElement);
   const linkImportUrlElement = getElementById("link-import-url", HTMLInputElement);
@@ -122,12 +168,35 @@ export function getHolidayMapElements(): HolidayMapElements | undefined {
     || !importPanelElement
     || !emptyStateElement
     || !pinCountElement
+    || !mobilePinCountElement
     || !reviewCountElement
+    || !mobileListCountElement
     || !storageStatusElement
     || !uploadInputElement
     || !downloadButtonElement
     || !shareButtonElement
     || !clearButtonElement
+    || !mobileActionsToggleElement
+    || !mobileActionsBackdropElement
+    || !mobileActionsPanelElement
+    || !mobileActionsCloseElement
+    || !mobileUploadButtonElement
+    || !mobileAddLinkElement
+    || !mobileDownloadButtonElement
+    || !mobileShareButtonElement
+    || !mobileUpdateSharedMapButtonElement
+    || !mobileClearButtonElement
+    || !mobileListToggleElement
+    || !mobileDetailBackdropElement
+    || !mobileDetailPanelElement
+    || !mobileDetailCloseElement
+    || !mobileDetailTitleElement
+    || !mobileDetailMediaElement
+    || !mobileDetailPhotoElement
+    || !mobileDetailFallbackElement
+    || !mobileDetailTypeElement
+    || !mobileDetailDescriptionElement
+    || !mobileDetailLinkElement
     || !listPanelElement
     || !linkImportFormElement
     || !linkImportUrlElement
@@ -175,12 +244,35 @@ export function getHolidayMapElements(): HolidayMapElements | undefined {
     importPanelElement,
     emptyStateElement,
     pinCountElement,
+    mobilePinCountElement,
     reviewCountElement,
+    mobileListCountElement,
     storageStatusElement,
     uploadInputElement,
     downloadButtonElement,
     shareButtonElement,
     clearButtonElement,
+    mobileActionsToggleElement,
+    mobileActionsBackdropElement,
+    mobileActionsPanelElement,
+    mobileActionsCloseElement,
+    mobileUploadButtonElement,
+    mobileAddLinkElement,
+    mobileDownloadButtonElement,
+    mobileShareButtonElement,
+    mobileUpdateSharedMapButtonElement,
+    mobileClearButtonElement,
+    mobileListToggleElement,
+    mobileDetailBackdropElement,
+    mobileDetailPanelElement,
+    mobileDetailCloseElement,
+    mobileDetailTitleElement,
+    mobileDetailMediaElement,
+    mobileDetailPhotoElement,
+    mobileDetailFallbackElement,
+    mobileDetailTypeElement,
+    mobileDetailDescriptionElement,
+    mobileDetailLinkElement,
     listPanelElement,
     linkImportFormElement,
     linkImportUrlElement,

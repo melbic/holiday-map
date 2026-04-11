@@ -51,6 +51,9 @@ The site no longer bundles location data into the page.
 - Sidebar rows use compact cards with a media preview.
 - The media preview shows `photo` when present and falls back to the location type emoji when the image is missing or fails.
 - Map popups show the `photo` at the top when available.
+- On mobile, the map becomes the primary full-screen canvas and the location list moves into a collapsed bottom sheet.
+- On mobile, location details open in a dedicated bottom sheet instead of a Leaflet popup.
+- On mobile, upload/share/import/download actions move behind a single `Actions` button.
 
 ## Import links
 
@@ -165,7 +168,7 @@ SUPABASE_URL="https://your-project.supabase.co"
 SUPABASE_SECRET_KEY="your-secret-key"
 ```
 
-Hosted Supabase also needs the SQL migrations from `supabase/migrations/` applied, not just the initial table creation.
+Hosted Supabase also needs the full repo migration set from `supabase/migrations/` applied, including the shared-map schema, RPCs, and permissions in the initial shared-map migration.
 
 ## Local Supabase
 

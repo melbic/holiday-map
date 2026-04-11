@@ -105,6 +105,8 @@ Rules:
 - Shared-map RPC functions use `security definer` with `search_path = ''`; keep all relation references schema-qualified if you edit them.
 - Real local share-map verification can run through `npm run test:shared-maps` and `npm run test:e2e:share:live` after `npx supabase start` and `npx supabase db reset --local`.
 - The sidebar header with `Holiday Map` and the pin count is sticky while the sidebar content scrolls.
+- On mobile, the map is the primary full-screen surface, the location list lives in a collapsed bottom sheet, and map details open in a dedicated mobile detail sheet instead of a Leaflet popup.
+- On mobile, upload/import/share/download/update/clear actions live behind a floating `Actions` button rather than staying inline in the list.
 - The introductory page chrome was intentionally removed. Keep the interface focused on the list and map unless the user asks for more surrounding content.
 - Location list items act as the primary control surface and highlight the active selection.
 - The sidebar is a single shared scroll container: mapped items and `Needs review` scroll together.
